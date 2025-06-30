@@ -62,22 +62,14 @@ const MainScreen = () => {
     }
   };
 
-  const renderItem = ({ item, index }: { item: Song; index: number }) => {
+  const renderItem = ({ item }: { item: Song }) => {
     const title = item.title_jp || item.title_en || '';
     return (
-      <View style={[styles.row, index === 0 && styles.selectedRow]}>
-        <Text style={[styles.id, index === 0 && styles.selectedId]}>
-          {item.tj_number}
-        </Text>
-        <Text style={[styles.id, index === 0 && styles.selectedId]}>
-          {item.ky_number}
-        </Text>
-        <Text style={[styles.title, index === 0 && styles.selectedText]}>
-          {title}
-        </Text>
-        <Text style={[styles.artist, index === 0 && styles.selectedText]}>
-          {item.artist}
-        </Text>
+      <View style={styles.row}>
+        <Text style={styles.id}>{item.tj_number}</Text>
+        <Text style={styles.id}>{item.ky_number}</Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.artist}>{item.artist}</Text>
       </View>
     );
   };
@@ -161,16 +153,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#333',
     backgroundColor: '#23292e',
   },
-  selectedRow: {
-    backgroundColor: '#3bb6e3',
-  },
   id: {
     color: '#7ed6f7',
     width: 60,
     fontWeight: 'bold',
-  },
-  selectedId: {
-    color: '#23292e',
   },
   title: {
     color: '#fff',
@@ -181,9 +167,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     flex: 1.5,
     fontWeight: 'bold',
-  },
-  selectedText: {
-    color: '#23292e',
   },
 });
 
