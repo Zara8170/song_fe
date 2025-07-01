@@ -1,0 +1,85 @@
+import { StyleSheet } from 'react-native';
+
+export const searchStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#23292e',
+    paddingTop: 80,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  backButton: {
+    position: 'relative',
+    marginRight: 8,
+    backgroundColor: '#2d3436',
+    borderRadius: 8,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    position: 'absolute',
+    top: 1,
+    left: 8,
+    color: '#7ed6f7',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#2d3436',
+    borderRadius: 8,
+    height: 40,
+    color: '#fff',
+    paddingHorizontal: 16,
+    fontSize: 16,
+  },
+  button: {
+    marginLeft: 8,
+    backgroundColor: '#7ed6f7',
+    borderRadius: 8,
+    height: 40,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#23292e',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  error: {
+    color: '#ff7675',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    backgroundColor: '#23292e',
+  },
+  id: {
+    color: '#7ed6f7',
+    width: 60,
+    fontWeight: 'bold',
+  },
+  title: {
+    color: '#fff',
+    flex: 2,
+    fontWeight: 'bold',
+  },
+  artist: {
+    color: '#fff',
+    flex: 1.5,
+    fontWeight: 'bold',
+  },
+});

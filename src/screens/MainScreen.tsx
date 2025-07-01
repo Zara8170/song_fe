@@ -1,15 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
   ActivityIndicator,
   Dimensions,
+  FlatList,
+  SafeAreaView,
+  StatusBar,
+  Text,
+  View,
+  TouchableOpacity,
 } from 'react-native';
 import { fetchSongs, Song } from '../api/song';
+import { styles } from './MainScreen.styles';
+import TopButton from '../components/TopButton';
+import { useNavigation } from '@react-navigation/native';
 
 const PAGE_SIZE = 20;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -22,6 +25,10 @@ const MainScreen = () => {
 
   const isFetchingRef = useRef(false);
   const [endReachedCalled, setEndReachedCalled] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+  const [showTopButton, setShowTopButton] = useState(false);
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -62,6 +69,15 @@ const MainScreen = () => {
     }
   };
 
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowTopButton(offsetY > 100);
+  };
+
+  const handlePressTop = () => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
   const renderItem = ({ item }: { item: Song }) => {
     const title = item.title_jp || item.title_en || '';
     return (
@@ -80,14 +96,31 @@ const MainScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.topHeader} />
       <StatusBar barStyle="light-content" backgroundColor="#23292e" />
+      <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#2d3436',
+            borderRadius: 8,
+            height: 50,
+            justifyContent: 'center',
+            paddingHorizontal: 16,
+          }}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('SearchScreen' as never)}
+        >
+          <Text style={{ color: '#aaa', fontSize: 16 }}>
+            검색어를 입력하세요
+          </Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.tableHeader}>
         <Text style={styles.headerId}>TJ</Text>
         <Text style={styles.headerId}>KY</Text>
         <Text style={styles.headerTitle}>곡 이름</Text>
         <Text style={styles.headerArtist}>가수명</Text>
       </View>
-
       <FlatList
+        ref={flatListRef}
         style={{ flex: 1 }}
         data={songs}
         renderItem={renderItem}
@@ -98,6 +131,8 @@ const MainScreen = () => {
           setEndReachedCalled(false);
         }}
         onContentSizeChange={handleContentSizeChange}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         initialNumToRender={PAGE_SIZE}
         ListFooterComponent={
           loading ? (
@@ -106,68 +141,9 @@ const MainScreen = () => {
         }
         contentContainerStyle={{ paddingBottom: 20 }}
       />
+      <TopButton visible={showTopButton} onPress={handlePressTop} />
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#23292e',
-  },
-  topHeader: {
-    height: 36,
-    backgroundColor: '#23292e',
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#444',
-  },
-  headerId: {
-    color: '#7ed6f7',
-    width: 60,
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    color: '#fff',
-    flex: 2,
-    fontWeight: 'bold',
-  },
-  headerArtist: {
-    color: '#fff',
-    flex: 1.5,
-    fontWeight: 'bold',
-  },
-  list: {
-    paddingBottom: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    backgroundColor: '#23292e',
-  },
-  id: {
-    color: '#7ed6f7',
-    width: 60,
-    fontWeight: 'bold',
-  },
-  title: {
-    color: '#fff',
-    flex: 2,
-    fontWeight: 'bold',
-  },
-  artist: {
-    color: '#fff',
-    flex: 1.5,
-    fontWeight: 'bold',
-  },
-});
 
 export default MainScreen;
