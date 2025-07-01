@@ -34,7 +34,7 @@ export const searchStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2d3436',
     borderRadius: 8,
-    height: 40,
+    height: 60,
     color: '#fff',
     paddingHorizontal: 16,
     fontSize: 16,
