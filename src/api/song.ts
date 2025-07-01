@@ -8,6 +8,7 @@ export interface Song {
   title_en: string;
   title_jp: string;
   artist: string;
+  artist_kr: string;
 }
 
 export interface SongListResponse {

@@ -61,7 +61,7 @@ const SearchScreen = () => {
       <View style={searchStyles.searchBar}>
         <TextInput
           style={searchStyles.input}
-          placeholder="검색어를 입력하세요"
+          placeholder="곡명, 가수로 검색하세요"
           placeholderTextColor="#aaa"
           value={query}
           onChangeText={setQuery}

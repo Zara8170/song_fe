@@ -7,12 +7,10 @@ import {
   StatusBar,
   Text,
   View,
-  TouchableOpacity,
 } from 'react-native';
 import { fetchSongs, Song } from '../api/song';
-import { styles } from './MainScreen.styles';
 import TopButton from '../components/TopButton';
-import { useNavigation } from '@react-navigation/native';
+import { styles } from './MainScreen.styles';
 
 const PAGE_SIZE = 20;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -22,13 +20,12 @@ const MainScreen = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [filter, setFilter] = useState<'ALL' | 'TJ' | 'KY'>('ALL');
 
   const isFetchingRef = useRef(false);
   const [endReachedCalled, setEndReachedCalled] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const [showTopButton, setShowTopButton] = useState(false);
-
-  const navigation = useNavigation();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -78,14 +75,103 @@ const MainScreen = () => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
+  const filteredSongs = songs.filter(song => {
+    if (filter === 'TJ') return !!song.tj_number;
+    if (filter === 'KY') return !!song.ky_number;
+    return true;
+  });
+
   const renderItem = ({ item }: { item: Song }) => {
-    const title = item.title_jp || item.title_en || '';
+    const tjBoxStyle = {
+      backgroundColor: '#FF5703',
+      borderRadius: 8,
+      minWidth: 60,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      paddingVertical: 6,
+      marginRight: 8,
+      marginBottom: 4,
+    };
+    const kyBoxStyle = {
+      backgroundColor: '#EB431E',
+      borderRadius: 8,
+      minWidth: 60,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      paddingVertical: 6,
+      marginRight: 8,
+      marginBottom: 4,
+    };
+
     return (
-      <View style={styles.row}>
-        <Text style={styles.id}>{item.tj_number}</Text>
-        <Text style={styles.id}>{item.ky_number}</Text>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.artist}>{item.artist}</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#23292e',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          marginBottom: 8,
+        }}
+      >
+        {/* 번호 박스 */}
+        {filter === 'ALL' && (
+          <View style={{ flexDirection: 'column', marginRight: 8 }}>
+            {item.tj_number ? (
+              <View style={tjBoxStyle}>
+                <Text
+                  style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}
+                >
+                  {item.tj_number}
+                </Text>
+              </View>
+            ) : null}
+            {item.ky_number ? (
+              <View style={kyBoxStyle}>
+                <Text
+                  style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}
+                >
+                  {item.ky_number}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        )}
+        {filter === 'TJ' && item.tj_number && (
+          <View style={tjBoxStyle}>
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+              {item.tj_number}
+            </Text>
+          </View>
+        )}
+        {filter === 'KY' && item.ky_number && (
+          <View style={kyBoxStyle}>
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+              {item.ky_number}
+            </Text>
+          </View>
+        )}
+        {/* 곡 정보 */}
+        <View
+          style={{ flex: 1, marginLeft: 4, minWidth: 0, overflow: 'hidden' }}
+        >
+          <Text
+            style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {[item.title_kr, ' - ', item.artist_kr].join('')}
+          </Text>
+          <Text
+            style={{ color: '#aaa', fontSize: 13, marginTop: 2 }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {[item.title_jp || item.title_en, ' - ', item.artist].join('')}
+          </Text>
+        </View>
+        {/* 즐겨찾기 아이콘 자리(추후 구현) */}
+        <Text style={{ marginLeft: 8, fontSize: 26, color: '#fff' }}>☆</Text>
       </View>
     );
   };
@@ -96,35 +182,40 @@ const MainScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.topHeader} />
       <StatusBar barStyle="light-content" backgroundColor="#23292e" />
-      <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
-        <TouchableOpacity
-          style={{
-            backgroundColor: '#2d3436',
-            borderRadius: 8,
-            height: 50,
-            justifyContent: 'center',
-            paddingHorizontal: 16,
-          }}
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('SearchScreen' as never)}
-        >
-          <Text style={{ color: '#aaa', fontSize: 16 }}>
-            검색어를 입력하세요
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'center',
+          marginVertical: 12,
+        }}
+      >
+        {['ALL', 'TJ', 'KY'].map(type => (
+          <Text
+            key={type}
+            onPress={() => setFilter(type as 'ALL' | 'TJ' | 'KY')}
+            style={{
+              backgroundColor: filter === type ? '#444' : '#23292e',
+              color: filter === type ? '#7ed6f7' : '#aaa',
+              borderRadius: 16,
+              paddingHorizontal: 18,
+              paddingVertical: 6,
+              marginHorizontal: 4,
+              fontWeight: 'bold',
+              fontSize: 15,
+              overflow: 'hidden',
+            }}
+          >
+            {type === 'ALL' ? 'TJ/KY' : type}
           </Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.tableHeader}>
-        <Text style={styles.headerId}>TJ</Text>
-        <Text style={styles.headerId}>KY</Text>
-        <Text style={styles.headerTitle}>곡 이름</Text>
-        <Text style={styles.headerArtist}>가수명</Text>
+        ))}
       </View>
       <FlatList
         ref={flatListRef}
         style={{ flex: 1 }}
-        data={songs}
+        data={filteredSongs}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        removeClippedSubviews={false}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.4}
         onMomentumScrollBegin={() => {
