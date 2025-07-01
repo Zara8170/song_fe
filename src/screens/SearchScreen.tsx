@@ -157,7 +157,12 @@ const SearchScreen = () => {
           </Text>
         </View>
         {/* 즐겨찾기 아이콘 자리(추후 구현) */}
-        <Text style={{ marginLeft: 8, fontSize: 26, color: '#fff' }}>☆</Text>
+        <Ionicons
+          name="star-outline"
+          size={26}
+          color="#fff"
+          style={{ marginLeft: 8 }}
+        />
       </View>
     );
   };

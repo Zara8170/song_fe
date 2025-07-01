@@ -3,8 +3,8 @@ import { StyleSheet } from 'react-native';
 export const topButtonStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 40,
-    right: 24,
+    bottom: 20,
+    right: 200,
     zIndex: 100,
   },
   button: {
