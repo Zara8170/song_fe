@@ -11,6 +11,7 @@ import { searchSongs, Song } from '../api/song';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import FavoriteButton from '../components/FavoriteButton';
 
 const PAGE_SIZE = 20;
 const RECENT_KEY = 'recent_search_keywords';
@@ -156,19 +157,14 @@ const SearchScreen = () => {
             {[item.title_jp || item.title_en, ' - ', item.artist].join('')}
           </Text>
         </View>
-        {/* 즐겨찾기 아이콘 자리(추후 구현) */}
-        <Ionicons
-          name="star-outline"
-          size={26}
-          color="#fff"
-          style={{ marginLeft: 8 }}
-        />
+        {/* 즐겨찾기 버튼 */}
+        <FavoriteButton songId={item.songId.toString()} />
       </View>
     );
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#23292e', paddingTop: 32 }}>
+    <View style={{ flex: 1, backgroundColor: '#23292e' }}>
       {/* 검색창 */}
       <View style={{ paddingHorizontal: 12, marginTop: 16, marginBottom: 16 }}>
         <View style={{ position: 'relative', width: '100%' }}>

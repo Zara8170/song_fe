@@ -6,7 +6,6 @@ export const styles = StyleSheet.create({
     backgroundColor: '#23292e',
   },
   topHeader: {
-    height: 60,
     backgroundColor: '#23292e',
   },
   tableHeader: {

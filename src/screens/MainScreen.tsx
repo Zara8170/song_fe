@@ -13,7 +13,7 @@ import {
 import { fetchSongs, Song } from '../api/song';
 import TopButton from '../components/TopButton';
 import { styles } from './MainScreen.styles';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import FavoriteButton from '../components/FavoriteButton';
 
 const PAGE_SIZE = 20;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -281,13 +281,8 @@ const MainScreen = () => {
                   )}
                 </Text>
               </View>
-              {/* 즐겨찾기 아이콘 자리(추후 구현) */}
-              <Ionicons
-                name="star-outline"
-                size={26}
-                color="#fff"
-                style={{ marginLeft: 8 }}
-              />
+              {/* 즐겨찾기 버튼 */}
+              <FavoriteButton songId={item.songId.toString()} />
             </View>
           );
         }}
