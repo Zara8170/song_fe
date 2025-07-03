@@ -64,7 +64,12 @@ const SearchScreen = () => {
     setLoading(true);
     setError('');
     try {
-      const data = await searchSongs(searchValue, reset ? 1 : page, PAGE_SIZE);
+      const data = await searchSongs(
+        searchValue,
+        reset ? 1 : page,
+        PAGE_SIZE,
+        'ALL',
+      );
       setResults(reset ? data.dtoList : [...results, ...data.dtoList]);
       setHasMore(data.next);
       setPage(reset ? 2 : page + 1);
@@ -110,6 +115,7 @@ const SearchScreen = () => {
       marginRight: 8,
       marginBottom: 4,
     };
+
     return (
       <View
         style={{
@@ -233,7 +239,7 @@ const SearchScreen = () => {
         </Text>
       ) : null}
       {/* 최근 검색어: 검색 결과 없을 때만 노출 */}
-      {results.length === 0 && recent.length > 0 && (
+      {results.length === 0 && recent.length > 0 && query.trim() === '' && (
         <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
           <View
             style={{
@@ -292,6 +298,25 @@ const SearchScreen = () => {
         }
         contentContainerStyle={{ paddingBottom: 20 }}
       />
+      {/* 검색 결과 없음 안내 */}
+      {!loading && results.length === 0 && query.trim() !== '' && !error && (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+        >
+          <Text style={{ color: '#aaa', fontSize: 16 }}>
+            검색 결과가 없습니다.
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

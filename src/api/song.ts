@@ -33,12 +33,13 @@ export async function searchSongs(
   query: string,
   page: number,
   size: number,
+  target: string = 'ALL',
   signal?: AbortSignal,
 ): Promise<SongListResponse> {
   const res = await fetch(
     `${API_BASE_URL}/api/es/song/search?keyword=${encodeURIComponent(
       query,
-    )}&page=${page}&size=${size}`,
+    )}&target=${target}&page=${page}&size=${size}`,
     { signal },
   );
   if (!res.ok) throw new Error('API error');
