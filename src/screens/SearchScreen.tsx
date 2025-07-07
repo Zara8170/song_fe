@@ -1,0 +1,207 @@
+import React, { useState, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  ActivityIndicator,
+  Keyboard,
+} from 'react-native';
+import { searchSongs, Song } from '../api/song';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import FavoriteButton from '../components/FavoriteButton';
+import styles from './SearchScreen.styles';
+
+const PAGE_SIZE = 20;
+const RECENT_KEY = 'recent_search_keywords';
+
+const SearchScreen = () => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState('');
+  const [recent, setRecent] = useState<string[]>([]);
+  const flatListRef = useRef<FlatList>(null);
+
+  // 탭 이동 시 상태 초기화 (진입 시 초기화)
+  useFocusEffect(
+    useCallback(() => {
+      setQuery('');
+      setResults([]);
+      setPage(1);
+      setHasMore(true);
+      setError('');
+    }, []),
+  );
+
+  // 최근 검색어 불러오기
+  React.useEffect(() => {
+    AsyncStorage.getItem(RECENT_KEY).then(data => {
+      if (data) setRecent(JSON.parse(data));
+    });
+  }, []);
+
+  // 최근 검색어 저장
+  const saveRecent = async (keyword: string) => {
+    let arr = [keyword, ...recent.filter(k => k !== keyword)];
+    if (arr.length > 10) arr = arr.slice(0, 10);
+    setRecent(arr);
+    await AsyncStorage.setItem(RECENT_KEY, JSON.stringify(arr));
+  };
+
+  // 최근 검색어 전체 삭제
+  const handleClearRecent = async () => {
+    setRecent([]);
+    await AsyncStorage.removeItem(RECENT_KEY);
+  };
+
+  const handleSearch = async (reset = true, customQuery?: string) => {
+    const searchValue = customQuery ?? query;
+    if (!searchValue.trim()) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await searchSongs(
+        searchValue,
+        reset ? 1 : page,
+        PAGE_SIZE,
+        'ALL',
+      );
+      setResults(reset ? data.dtoList : [...results, ...data.dtoList]);
+      setHasMore(data.next);
+      setPage(reset ? 2 : page + 1);
+      if (reset)
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+      saveRecent(searchValue);
+    } catch (e) {
+      setError('검색 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEndReached = () => {
+    if (!hasMore || loading) return;
+    handleSearch(false);
+  };
+
+  const handleRecentPress = (keyword: string) => {
+    setQuery(keyword);
+    handleSearch(true, keyword);
+    Keyboard.dismiss();
+  };
+
+  const renderItem = ({ item }: { item: Song }) => {
+    return (
+      <View style={styles.resultItem}>
+        {/* 번호 박스 */}
+        <View style={styles.numberColumn}>
+          {item.tj_number ? (
+            <View style={styles.tjBox}>
+              <Text style={styles.songTitle}>{item.tj_number}</Text>
+            </View>
+          ) : null}
+          {item.ky_number ? (
+            <View style={styles.kyBox}>
+              <Text style={styles.songTitle}>{item.ky_number}</Text>
+            </View>
+          ) : null}
+        </View>
+        {/* 곡 정보 */}
+        <View style={styles.songInfo}>
+          <Text style={styles.songTitle} numberOfLines={1} ellipsizeMode="tail">
+            {[item.title_kr, ' - ', item.artist_kr].join('')}
+          </Text>
+          <Text style={styles.songSub} numberOfLines={1} ellipsizeMode="tail">
+            {[item.title_jp || item.title_en, ' - ', item.artist].join('')}
+          </Text>
+        </View>
+        {/* 즐겨찾기 버튼 */}
+        <FavoriteButton songId={item.songId.toString()} />
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* 검색창 */}
+      <View style={styles.searchBoxWrapper}>
+        <View style={styles.searchBoxInner}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="곡명, 가수로 검색하세요"
+            placeholderTextColor="#aaa"
+            value={query}
+            onChangeText={setQuery}
+            onSubmitEditing={() => {
+              Keyboard.dismiss();
+              handleSearch();
+            }}
+            returnKeyType="search"
+          />
+          {/* 검색 아이콘 */}
+          <View style={styles.searchIconWrapper}>
+            <View style={styles.searchIconBg}>
+              <Ionicons
+                name="search"
+                size={22}
+                color="#23292e"
+                onPress={() => {
+                  Keyboard.dismiss();
+                  handleSearch();
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {/* 최근 검색어: 검색 결과 없을 때만 노출 */}
+      {results.length === 0 && recent.length > 0 && query.trim() === '' && (
+        <View style={styles.recentWrapper}>
+          <View style={styles.recentHeader}>
+            <Text style={styles.recentTitle}>최근 검색어</Text>
+            <Text onPress={handleClearRecent} style={styles.recentClear}>
+              초기화
+            </Text>
+          </View>
+          {recent.map(keyword => (
+            <Text
+              key={keyword}
+              onPress={() => handleRecentPress(keyword)}
+              style={styles.recentKeyword}
+            >
+              #{keyword}
+            </Text>
+          ))}
+        </View>
+      )}
+      <FlatList
+        ref={flatListRef}
+        data={results}
+        renderItem={renderItem}
+        keyExtractor={item => item.songId.toString()}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loading ? (
+            <ActivityIndicator color="#7ed6f7" style={{ margin: 16 }} />
+          ) : null
+        }
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
+      {/* 검색 결과 없음 안내 */}
+      {!loading && results.length === 0 && query.trim() !== '' && !error && (
+        <View style={styles.noResultWrapper}>
+          <Text style={styles.noResultText}>검색 결과가 없습니다.</Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+export default SearchScreen;
