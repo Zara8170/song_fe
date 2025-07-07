@@ -1,50 +1,18 @@
 import { StyleSheet } from 'react-native';
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#23292e',
-  },
-  topHeader: {
-    backgroundColor: '#23292e',
-  },
-  tabBar: {
-    flexDirection: 'row',
     justifyContent: 'center',
-    marginVertical: 12,
-    position: 'relative',
-  },
-  tabButton: {
-    flex: 1,
     alignItems: 'center',
   },
-  tabText: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    paddingVertical: 8,
-    borderRadius: 16,
-    paddingHorizontal: 18,
-    overflow: 'hidden',
-  },
-  tabTextActive: {
-    color: '#7ed6f7',
-    backgroundColor: '#2d3436',
-  },
-  tabTextInactive: {
-    color: '#aaa',
-    backgroundColor: 'transparent',
-  },
-  tabUnderline: {
-    position: 'absolute',
-    bottom: 0,
-    width: '33.33%',
-    height: 4,
-    backgroundColor: '#7ed6f7',
-    borderRadius: 2,
-    zIndex: 1,
+  text: {
+    color: '#fff',
+    fontSize: 18,
   },
   list: {
-    flex: 1,
+    backgroundColor: '#23292e',
   },
   resultItem: {
     flexDirection: 'row',
@@ -53,7 +21,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 8,
-    height: 100,
   },
   numberColumn: {
     flexDirection: 'column',
@@ -81,9 +48,6 @@ export const styles = StyleSheet.create({
   },
   songInfo: {
     flex: 1,
-    marginLeft: 4,
-    minWidth: 0,
-    overflow: 'hidden',
   },
   songTitle: {
     color: '#fff',
@@ -96,3 +60,5 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
+export default styles;

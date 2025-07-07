@@ -108,32 +108,19 @@ const MainScreen = () => {
       <View style={styles.topHeader} />
       <StatusBar barStyle="light-content" backgroundColor="#23292e" />
       {/* 상단 Animated 탭 */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          marginVertical: 12,
-          position: 'relative',
-        }}
-      >
+      <View style={styles.tabBar}>
         {TAB_TYPES.map(type => (
           <TouchableOpacity
             key={type}
             onPress={() => setFilter(type)}
             activeOpacity={0.7}
-            style={{ flex: 1, alignItems: 'center' }}
+            style={styles.tabButton}
           >
             <Text
-              style={{
-                color: filter === type ? '#7ed6f7' : '#aaa',
-                fontWeight: 'bold',
-                fontSize: 15,
-                paddingVertical: 8,
-                backgroundColor: filter === type ? '#2d3436' : 'transparent',
-                borderRadius: 16,
-                paddingHorizontal: 18,
-                overflow: 'hidden',
-              }}
+              style={[
+                styles.tabText,
+                filter === type ? styles.tabTextActive : styles.tabTextInactive,
+              ]}
             >
               {TAB_LABELS[type]}
             </Text>
@@ -141,138 +128,65 @@ const MainScreen = () => {
         ))}
         {/* Animated underline */}
         <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: tabAnim.interpolate({
-              inputRange: [0, 1, 2],
-              outputRange: ['0%', '33.33%', '66.66%'],
-            }),
-            width: '33.33%',
-            height: 4,
-            backgroundColor: '#7ed6f7',
-            borderRadius: 2,
-            zIndex: 1,
-          }}
+          style={[
+            styles.tabUnderline,
+            {
+              left: tabAnim.interpolate({
+                inputRange: [0, 1, 2],
+                outputRange: ['0%', '33.33%', '66.66%'],
+              }),
+            },
+          ]}
         />
       </View>
       {/* 리스트 */}
       <FlatList
         ref={flatListRef}
-        style={{ flex: 1 }}
+        style={styles.list}
         data={filteredSongs}
         renderItem={({ item }) => {
-          const tjBoxStyle = {
-            backgroundColor: '#FF5703',
-            borderRadius: 8,
-            minWidth: 60,
-            alignItems: 'center' as const,
-            justifyContent: 'center' as const,
-            paddingVertical: 6,
-            marginRight: 8,
-            marginBottom: 4,
-          };
-          const kyBoxStyle = {
-            backgroundColor: '#EB431E',
-            borderRadius: 8,
-            minWidth: 60,
-            alignItems: 'center' as const,
-            justifyContent: 'center' as const,
-            paddingVertical: 6,
-            marginRight: 8,
-            marginBottom: 4,
-          };
           return (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: '#23292e',
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                marginBottom: 8,
-                height: 100,
-              }}
-            >
+            <View style={styles.resultItem}>
               {/* 번호 박스 */}
               {filter === 'ALL' && (
-                <View style={{ flexDirection: 'column', marginRight: 8 }}>
+                <View style={styles.numberColumn}>
                   {item.tj_number ? (
-                    <View style={tjBoxStyle}>
-                      <Text
-                        style={{
-                          color: '#fff',
-                          fontWeight: 'bold',
-                          fontSize: 16,
-                        }}
-                      >
-                        {item.tj_number}
-                      </Text>
+                    <View style={styles.tjBox}>
+                      <Text style={styles.songTitle}>{item.tj_number}</Text>
                     </View>
                   ) : null}
                   {item.ky_number ? (
-                    <View style={kyBoxStyle}>
-                      <Text
-                        style={{
-                          color: '#fff',
-                          fontWeight: 'bold',
-                          fontSize: 16,
-                        }}
-                      >
-                        {item.ky_number}
-                      </Text>
+                    <View style={styles.kyBox}>
+                      <Text style={styles.songTitle}>{item.ky_number}</Text>
                     </View>
                   ) : null}
                 </View>
               )}
               {filter === 'TJ' && item.tj_number && (
-                <View style={{ flexDirection: 'column', marginRight: 8 }}>
-                  <View style={tjBoxStyle}>
-                    <Text
-                      style={{
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        fontSize: 16,
-                      }}
-                    >
-                      {item.tj_number}
-                    </Text>
+                <View style={styles.numberColumn}>
+                  <View style={styles.tjBox}>
+                    <Text style={styles.songTitle}>{item.tj_number}</Text>
                   </View>
                 </View>
               )}
               {filter === 'KY' && item.ky_number && (
-                <View style={{ flexDirection: 'column', marginRight: 8 }}>
-                  <View style={kyBoxStyle}>
-                    <Text
-                      style={{
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        fontSize: 16,
-                      }}
-                    >
-                      {item.ky_number}
-                    </Text>
+                <View style={styles.numberColumn}>
+                  <View style={styles.kyBox}>
+                    <Text style={styles.songTitle}>{item.ky_number}</Text>
                   </View>
                 </View>
               )}
               {/* 곡 정보 */}
-              <View
-                style={{
-                  flex: 1,
-                  marginLeft: 4,
-                  minWidth: 0,
-                  overflow: 'hidden',
-                }}
-              >
+              <View style={styles.songInfo}>
                 <Text
-                  style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}
+                  style={styles.songTitle}
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
                   {[item.title_kr, ' - ', item.artist_kr].join('')}
                 </Text>
                 <Text
-                  style={{ color: '#aaa', fontSize: 13, marginTop: 2 }}
+                  style={styles.songSub}
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >

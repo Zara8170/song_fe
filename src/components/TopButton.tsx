@@ -8,8 +8,8 @@ interface TopButtonProps {
 }
 
 const TopButton: React.FC<TopButtonProps> = ({ visible, onPress }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current; // opacity
-  const slideAnim = useRef(new Animated.Value(40)).current; // Y offset
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(40)).current;
   const [shouldRender, setShouldRender] = useState(visible);
 
   useEffect(() => {
