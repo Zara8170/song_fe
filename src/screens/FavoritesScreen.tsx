@@ -1,27 +1,30 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, FlatList, ActivityIndicator } from 'react-native';
-import { useFavorites } from '../hooks/FavoritesContext';
-import { fetchSongs, Song } from '../api/song';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { fetchSongsByIds, Song } from '../api/song';
 import FavoriteButton from '../components/FavoriteButton';
+import { useFavorites } from '../hooks/FavoritesContext';
 import styles from './FavoritesScreen.styles';
+import { useToast } from '../contexts/ToastContext';
 
 const FavoritesScreen = () => {
   const { favorites } = useFavorites();
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
-    fetchSongs(1, 100)
-      .then(data => {
-        setSongs(data.dtoList);
-      })
+    if (favorites.length === 0) {
+      setSongs([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    fetchSongsByIds(favorites)
+      .then(data => setSongs(data))
       .finally(() => setLoading(false));
-  }, []);
+  }, [favorites]);
 
-  const favoriteSongs = useMemo(
-    () => songs.filter(song => favorites.includes(song.songId.toString())),
-    [songs, favorites],
-  );
+  const favoriteSongs = songs;
 
   if (loading) {
     return (
@@ -72,7 +75,11 @@ const FavoritesScreen = () => {
               {[item.title_jp || item.title_en, ' - ', item.artist].join('')}
             </Text>
           </View>
-          <FavoriteButton songId={item.songId.toString()} />
+          <FavoriteButton
+            songId={item.songId.toString()}
+            onAdd={() => showToast('즐겨찾기에 추가되었습니다.')}
+            onRemove={() => showToast('즐겨찾기에서 삭제되었습니다.')}
+          />
         </View>
       )}
     />

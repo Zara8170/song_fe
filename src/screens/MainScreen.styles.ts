@@ -95,4 +95,9 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
+  loadingContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

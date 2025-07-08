@@ -5,16 +5,20 @@ import { useFavorites } from '../hooks/FavoritesContext';
 
 type Props = {
   songId: string;
+  onAdd?: () => void;
+  onRemove?: () => void;
 };
 
-export default function FavoriteButton({ songId }: Props) {
+export default function FavoriteButton({ songId, onAdd, onRemove }: Props) {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
   const toggleFavorite = () => {
     if (isFavorite(songId)) {
       removeFavorite(songId);
+      if (onRemove) onRemove();
     } else {
       addFavorite(songId);
+      if (onAdd) onAdd();
     }
   };
 

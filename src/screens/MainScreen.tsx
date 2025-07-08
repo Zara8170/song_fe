@@ -14,6 +14,7 @@ import { fetchSongs, Song } from '../api/song';
 import TopButton from '../components/TopButton';
 import { styles } from './MainScreen.styles';
 import FavoriteButton from '../components/FavoriteButton';
+import { useToast } from '../contexts/ToastContext';
 
 const PAGE_SIZE = 20;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -37,6 +38,7 @@ const MainScreen = () => {
   const [endReachedCalled, setEndReachedCalled] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const [showTopButton, setShowTopButton] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -196,27 +198,27 @@ const MainScreen = () => {
                 </Text>
               </View>
               {/* 즐겨찾기 버튼 */}
-              <FavoriteButton songId={item.songId.toString()} />
+              <FavoriteButton
+                songId={item.songId.toString()}
+                onAdd={() => showToast('즐겨찾기에 추가되었습니다.')}
+                onRemove={() => showToast('즐겨찾기에서 삭제되었습니다.')}
+              />
             </View>
           );
         }}
         keyExtractor={keyExtractor}
-        removeClippedSubviews={false}
         onEndReached={handleEndReached}
-        onEndReachedThreshold={0.4}
-        onMomentumScrollBegin={() => {
-          setEndReachedCalled(false);
-        }}
+        onEndReachedThreshold={0.2}
         onContentSizeChange={handleContentSizeChange}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        initialNumToRender={PAGE_SIZE}
         ListFooterComponent={
           loading ? (
-            <ActivityIndicator color="#7ed6f7" style={{ margin: 16 }} />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="#fff" />
+            </View>
           ) : null
         }
-        contentContainerStyle={{ paddingBottom: 20 }}
       />
       <TopButton visible={showTopButton} onPress={handlePressTop} />
     </SafeAreaView>

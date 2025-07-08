@@ -45,3 +45,31 @@ export async function searchSongs(
   if (!res.ok) throw new Error('API error');
   return res.json();
 }
+
+export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
+  const res = await fetch(`${API_BASE_URL}/api/song/batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(songIds),
+  });
+  if (!res.ok) throw new Error('API error');
+  return res.json();
+}
+
+interface RecommendationResponseFromPythonDTO {
+  recommendation: string;
+}
+
+export const requestRecommendation = async (
+  message: string,
+): Promise<RecommendationResponseFromPythonDTO> => {
+  const res = await fetch(`${API_BASE_URL}/api/recommendation/request`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) throw new Error('API error');
+  return res.json();
+};
