@@ -11,8 +11,9 @@ import { searchSongs, Song } from '../api/song';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import FavoriteButton from '../components/FavoriteButton';
+import SongListItem from '../components/SongListItem';
 import styles from './SearchScreen.styles';
+import { useToast } from '../contexts/ToastContext';
 
 const PAGE_SIZE = 20;
 const RECENT_KEY = 'recent_search_keywords';
@@ -26,6 +27,7 @@ const SearchScreen = () => {
   const [error, setError] = useState('');
   const [recent, setRecent] = useState<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  const { showToast } = useToast();
 
   // 탭 이동 시 상태 초기화 (진입 시 초기화)
   useFocusEffect(
@@ -95,36 +97,14 @@ const SearchScreen = () => {
     Keyboard.dismiss();
   };
 
-  const renderItem = ({ item }: { item: Song }) => {
-    return (
-      <View style={styles.resultItem}>
-        {/* 번호 박스 */}
-        <View style={styles.numberColumn}>
-          {item.tj_number ? (
-            <View style={styles.tjBox}>
-              <Text style={styles.songTitle}>{item.tj_number}</Text>
-            </View>
-          ) : null}
-          {item.ky_number ? (
-            <View style={styles.kyBox}>
-              <Text style={styles.songTitle}>{item.ky_number}</Text>
-            </View>
-          ) : null}
-        </View>
-        {/* 곡 정보 */}
-        <View style={styles.songInfo}>
-          <Text style={styles.songTitle} numberOfLines={1} ellipsizeMode="tail">
-            {[item.title_kr, ' - ', item.artist_kr].join('')}
-          </Text>
-          <Text style={styles.songSub} numberOfLines={1} ellipsizeMode="tail">
-            {[item.title_jp || item.title_en, ' - ', item.artist].join('')}
-          </Text>
-        </View>
-        {/* 즐겨찾기 버튼 */}
-        <FavoriteButton songId={item.songId.toString()} />
-      </View>
-    );
-  };
+  const renderItem = ({ item }: { item: Song }) => (
+    <SongListItem
+      item={item}
+      showFilter="ALL"
+      onFavoriteAdd={() => showToast('즐겨찾기에 추가되었습니다.')}
+      onFavoriteRemove={() => showToast('즐겨찾기에서 삭제되었습니다.')}
+    />
+  );
 
   return (
     <View style={styles.container}>
