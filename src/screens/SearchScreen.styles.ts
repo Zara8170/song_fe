@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     fontWeight: 'bold',
-    paddingRight: 48, // 아이콘 영역 확보
+    paddingRight: 48,
   },
   searchIconWrapper: {
     position: 'absolute',
@@ -77,54 +77,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     borderRadius: 8,
     paddingLeft: 4,
-  },
-  resultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#23292e',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  numberColumn: {
-    flexDirection: 'column',
-    marginRight: 8,
-  },
-  tjBox: {
-    backgroundColor: '#FF5703',
-    borderRadius: 8,
-    minWidth: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 4,
-  },
-  kyBox: {
-    backgroundColor: '#EB431E',
-    borderRadius: 8,
-    minWidth: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 4,
-  },
-  songInfo: {
-    flex: 1,
-    marginLeft: 4,
-    minWidth: 0,
-    overflow: 'hidden',
-  },
-  songTitle: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  songSub: {
-    color: '#aaa',
-    fontSize: 13,
-    marginTop: 2,
   },
   noResultWrapper: {
     flex: 1,
