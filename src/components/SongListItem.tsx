@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import { Song } from '../api/song';
 import FavoriteButton from './FavoriteButton';
 import styles from './SongListItem.styles';
+import { Marquee } from '@animatereactnative/marquee';
 
 interface SongListItemProps {
   item: Song;
@@ -19,6 +20,15 @@ const SongListItem: React.FC<SongListItemProps> = ({
 }) => {
   const shouldShowTJ = showFilter === 'ALL' || showFilter === 'TJ';
   const shouldShowKY = showFilter === 'ALL' || showFilter === 'KY';
+
+  // 곡 정보 텍스트
+  const mainTitle = [item.title_kr, ' - ', item.artist_kr].join('');
+  const subTitle = [item.title_jp || item.title_en, ' - ', item.artist].join(
+    '',
+  );
+
+  const TITLE_LENGTH_THRESHOLD = 25;
+  const SUBTITLE_LENGTH_THRESHOLD = 25;
 
   return (
     <View style={styles.resultItem}>
@@ -38,12 +48,24 @@ const SongListItem: React.FC<SongListItemProps> = ({
 
       {/* 곡 정보 */}
       <View style={styles.songInfo}>
-        <Text style={styles.songTitle} numberOfLines={1} ellipsizeMode="tail">
-          {[item.title_kr, ' - ', item.artist_kr].join('')}
-        </Text>
-        <Text style={styles.songSub} numberOfLines={1} ellipsizeMode="tail">
-          {[item.title_jp || item.title_en, ' - ', item.artist].join('')}
-        </Text>
+        {mainTitle.length > TITLE_LENGTH_THRESHOLD ? (
+          <Marquee speed={1} spacing={20} style={{ width: '100%' }}>
+            <Text style={styles.songTitle}>{mainTitle}</Text>
+          </Marquee>
+        ) : (
+          <Text style={styles.songTitle} numberOfLines={1} ellipsizeMode="tail">
+            {mainTitle}
+          </Text>
+        )}
+        {subTitle.length > SUBTITLE_LENGTH_THRESHOLD ? (
+          <Marquee speed={1} spacing={20} style={{ width: '100%' }}>
+            <Text style={styles.songSub}>{subTitle}</Text>
+          </Marquee>
+        ) : (
+          <Text style={styles.songSub} numberOfLines={1} ellipsizeMode="tail">
+            {subTitle}
+          </Text>
+        )}
       </View>
 
       {/* 즐겨찾기 버튼 */}

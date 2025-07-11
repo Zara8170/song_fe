@@ -36,9 +36,9 @@ const styles = StyleSheet.create({
   },
   songInfo: {
     flex: 1,
-    marginLeft: 4,
     minWidth: 0,
     overflow: 'hidden',
+    justifyContent: 'center',
   },
   songTitle: {
     color: '#fff',
