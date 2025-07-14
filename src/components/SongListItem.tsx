@@ -49,7 +49,7 @@ const SongListItem: React.FC<SongListItemProps> = ({
       {/* 곡 정보 */}
       <View style={styles.songInfo}>
         {mainTitle.length > TITLE_LENGTH_THRESHOLD ? (
-          <Marquee speed={1} spacing={20} style={{ width: '100%' }}>
+          <Marquee speed={0.5} spacing={20} style={{ width: '100%' }}>
             <Text style={styles.songTitle}>{mainTitle}</Text>
           </Marquee>
         ) : (
@@ -58,7 +58,7 @@ const SongListItem: React.FC<SongListItemProps> = ({
           </Text>
         )}
         {subTitle.length > SUBTITLE_LENGTH_THRESHOLD ? (
-          <Marquee speed={1} spacing={20} style={{ width: '100%' }}>
+          <Marquee speed={0.5} spacing={20} style={{ width: '100%' }}>
             <Text style={styles.songSub}>{subTitle}</Text>
           </Marquee>
         ) : (
