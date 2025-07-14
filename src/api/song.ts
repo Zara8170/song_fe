@@ -56,19 +56,21 @@ export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
   return res.json();
 }
 
-interface RecommendationResponseFromPythonDTO {
-  recommendation: string;
+interface RecommendationResponse {
+  message: string;
 }
 
 export const requestRecommendation = async (
-  message: string,
-): Promise<RecommendationResponseFromPythonDTO> => {
+  text: string,
+  favoriteSongIds: number[],
+): Promise<RecommendationResponse> => {
   const res = await fetch(`${API_BASE_URL}/api/recommendation/request`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ message }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text,
+      favorite_song_ids: favoriteSongIds,
+    }),
   });
   if (!res.ok) throw new Error('API error');
   return res.json();

@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { fetchSongs, Song } from '../api/song';
 import TopButton from '../components/TopButton';
+import SongListItem from '../components/SongListItem';
 import { styles } from './MainScreen.styles';
-import FavoriteButton from '../components/FavoriteButton';
 import { useToast } from '../contexts/ToastContext';
 
 const PAGE_SIZE = 20;
@@ -35,7 +35,6 @@ const MainScreen = () => {
   const tabAnim = useRef(new Animated.Value(0)).current;
 
   const isFetchingRef = useRef(false);
-  const [endReachedCalled, setEndReachedCalled] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const [showTopButton, setShowTopButton] = useState(false);
   const { showToast } = useToast();
@@ -72,13 +71,10 @@ const MainScreen = () => {
       useNativeDriver: false,
       friction: 7,
     }).start();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [filter, tabAnim]);
 
   const handleEndReached = () => {
-    if (isFetchingRef.current || loading || !hasMore || endReachedCalled)
-      return;
-    setEndReachedCalled(true);
+    if (isFetchingRef.current || loading || !hasMore) return;
     setPage(prev => prev + 1);
   };
 
@@ -104,6 +100,15 @@ const MainScreen = () => {
   });
 
   const keyExtractor = (item: Song) => item.songId.toString();
+
+  const renderItem = ({ item }: { item: Song }) => (
+    <SongListItem
+      item={item}
+      showFilter={filter}
+      onFavoriteAdd={() => showToast('즐겨찾기에 추가되었습니다.')}
+      onFavoriteRemove={() => showToast('즐겨찾기에서 삭제되었습니다.')}
+    />
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -146,69 +151,10 @@ const MainScreen = () => {
         ref={flatListRef}
         style={styles.list}
         data={filteredSongs}
-        renderItem={({ item }) => {
-          return (
-            <View style={styles.resultItem}>
-              {/* 번호 박스 */}
-              {filter === 'ALL' && (
-                <View style={styles.numberColumn}>
-                  {item.tj_number ? (
-                    <View style={styles.tjBox}>
-                      <Text style={styles.songTitle}>{item.tj_number}</Text>
-                    </View>
-                  ) : null}
-                  {item.ky_number ? (
-                    <View style={styles.kyBox}>
-                      <Text style={styles.songTitle}>{item.ky_number}</Text>
-                    </View>
-                  ) : null}
-                </View>
-              )}
-              {filter === 'TJ' && item.tj_number && (
-                <View style={styles.numberColumn}>
-                  <View style={styles.tjBox}>
-                    <Text style={styles.songTitle}>{item.tj_number}</Text>
-                  </View>
-                </View>
-              )}
-              {filter === 'KY' && item.ky_number && (
-                <View style={styles.numberColumn}>
-                  <View style={styles.kyBox}>
-                    <Text style={styles.songTitle}>{item.ky_number}</Text>
-                  </View>
-                </View>
-              )}
-              {/* 곡 정보 */}
-              <View style={styles.songInfo}>
-                <Text
-                  style={styles.songTitle}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {[item.title_kr, ' - ', item.artist_kr].join('')}
-                </Text>
-                <Text
-                  style={styles.songSub}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {[item.title_jp || item.title_en, ' - ', item.artist].join(
-                    '',
-                  )}
-                </Text>
-              </View>
-              {/* 즐겨찾기 버튼 */}
-              <FavoriteButton
-                songId={item.songId.toString()}
-                onAdd={() => showToast('즐겨찾기에 추가되었습니다.')}
-                onRemove={() => showToast('즐겨찾기에서 삭제되었습니다.')}
-              />
-            </View>
-          );
-        }}
+        renderItem={renderItem}
         keyExtractor={keyExtractor}
         onEndReached={handleEndReached}
-        onEndReachedThreshold={0.2}
+        onEndReachedThreshold={0.1}
         onContentSizeChange={handleContentSizeChange}
         onScroll={handleScroll}
         scrollEventThrottle={16}
