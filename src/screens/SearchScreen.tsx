@@ -29,7 +29,6 @@ const SearchScreen = () => {
   const flatListRef = useRef<FlatList>(null);
   const { showToast } = useToast();
 
-  // 탭 이동 시 상태 초기화 (진입 시 초기화)
   useFocusEffect(
     useCallback(() => {
       setQuery('');
@@ -40,14 +39,12 @@ const SearchScreen = () => {
     }, []),
   );
 
-  // 최근 검색어 불러오기
   React.useEffect(() => {
     AsyncStorage.getItem(RECENT_KEY).then(data => {
       if (data) setRecent(JSON.parse(data));
     });
   }, []);
 
-  // 최근 검색어 저장
   const saveRecent = async (keyword: string) => {
     let arr = [keyword, ...recent.filter(k => k !== keyword)];
     if (arr.length > 10) arr = arr.slice(0, 10);
@@ -55,7 +52,6 @@ const SearchScreen = () => {
     await AsyncStorage.setItem(RECENT_KEY, JSON.stringify(arr));
   };
 
-  // 최근 검색어 전체 삭제
   const handleClearRecent = async () => {
     setRecent([]);
     await AsyncStorage.removeItem(RECENT_KEY);
@@ -108,7 +104,6 @@ const SearchScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* 검색창 */}
       <View style={styles.searchBoxWrapper}>
         <View style={styles.searchBoxInner}>
           <TextInput
@@ -123,7 +118,6 @@ const SearchScreen = () => {
             }}
             returnKeyType="search"
           />
-          {/* 검색 아이콘 */}
           <View style={styles.searchIconWrapper}>
             <View style={styles.searchIconBg}>
               <Ionicons
@@ -140,7 +134,6 @@ const SearchScreen = () => {
         </View>
       </View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      {/* 최근 검색어: 검색 결과 없을 때만 노출 */}
       {results.length === 0 && recent.length > 0 && query.trim() === '' && (
         <View style={styles.recentWrapper}>
           <View style={styles.recentHeader}>
@@ -174,7 +167,6 @@ const SearchScreen = () => {
         }
         contentContainerStyle={{ paddingBottom: 20 }}
       />
-      {/* 검색 결과 없음 안내 */}
       {!loading && results.length === 0 && query.trim() !== '' && !error && (
         <View style={styles.noResultWrapper}>
           <Text style={styles.noResultText}>검색 결과가 없습니다.</Text>
