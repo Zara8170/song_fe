@@ -41,7 +41,9 @@ export async function searchSongs(
     )}&target=${target}&page=${page}&size=${size}`,
     { signal },
   );
-  if (!res.ok) throw new Error('API error');
+  if (!res.ok) {
+    throw new Error('검색에 실패했습니다');
+  }
   return res.json();
 }
 

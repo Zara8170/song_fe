@@ -77,6 +77,7 @@ const SearchScreen = () => {
       saveRecent(searchValue);
     } catch (e) {
       setError('검색 중 오류가 발생했습니다.');
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
