@@ -40,6 +40,11 @@ const MainScreen = () => {
   const { showToast } = useToast();
 
   useEffect(() => {
+    console.log('[MainScreen] 컴포넌트 마운트: 초기 페이지 설정');
+    setPage(1);
+  }, []);
+
+  useEffect(() => {
     const controller = new AbortController();
 
     const load = async () => {
@@ -48,13 +53,50 @@ const MainScreen = () => {
       setLoading(true);
 
       try {
-        const data = await fetchSongs(page, PAGE_SIZE, controller.signal);
-        setSongs(prev =>
-          page === 1 ? data.dtoList : [...prev, ...data.dtoList],
+        console.log(
+          `[MainScreen] 페이지 ${page + 1} 데이터 요청 중 (size=${PAGE_SIZE})`,
         );
+        const data = await fetchSongs(page, PAGE_SIZE, controller.signal);
+
+        // API 응답 상세 정보 로깅
+        console.log(`[MainScreen] API 응답 정보:
+          - 현재 페이지: ${page + 1}
+          - 다음 페이지 존재: ${data.next}
+          - 노래 데이터 개수: ${data.dtoList.length}
+        `);
+
+        if (data.dtoList && data.dtoList.length > 0) {
+          const sampleSongs = data.dtoList.slice(0, 3);
+          console.log('[MainScreen] 노래 데이터 샘플 (첫 3개):');
+          sampleSongs.forEach((song, idx) => {
+            console.log(
+              `  ${idx + 1}. ${song.title_kr} - ${song.artist_kr} (TJ: ${
+                song.tj_number || 'N/A'
+              }, KY: ${song.ky_number || 'N/A'})`,
+            );
+          });
+          console.log(`  ... 외 ${data.dtoList.length - 3}개 노래`);
+        }
+
+        // 한 번만 setSongs 호출하고 로그 출력
+        setSongs(prev => {
+          const updatedSongs =
+            page === 0 ? data.dtoList : [...prev, ...data.dtoList];
+          console.log(`[MainScreen] 데이터 업데이트 완료: 
+            - 현재 페이지: ${page + 1}
+            - 이전 노래 수: ${prev.length}
+            - 새로 로드된 노래 수: ${data.dtoList.length}
+            - 누적 노래 수: ${updatedSongs.length}
+            - 더 불러올 데이터: ${data.next ? '있음' : '없음'}
+          `);
+          return updatedSongs;
+        });
+
         setHasMore(data.next);
       } catch (e: any) {
-        if (e.name !== 'AbortError') console.error(e);
+        if (e.name !== 'AbortError') {
+          console.error(`[MainScreen] 데이터 로드 오류:`, e);
+        }
       } finally {
         setLoading(false);
         isFetchingRef.current = false;
@@ -73,14 +115,18 @@ const MainScreen = () => {
     }).start();
   }, [filter, tabAnim]);
 
+  const loadNextPage = () => {
+    setPage(prev => prev + 1);
+  };
+
   const handleEndReached = () => {
     if (isFetchingRef.current || loading || !hasMore) return;
-    setPage(prev => prev + 1);
+    loadNextPage();
   };
 
   const handleContentSizeChange = (_w: number, h: number) => {
     if (h < SCREEN_HEIGHT && hasMore && !loading && !isFetchingRef.current) {
-      setPage(prev => prev + 1);
+      loadNextPage();
     }
   };
 
