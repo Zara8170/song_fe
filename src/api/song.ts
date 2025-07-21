@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '@env';
+import { fetchWithAuth } from './fetchWithAuth';
 
 export interface Song {
   songId: number;
@@ -21,10 +21,9 @@ export async function fetchSongs(
   size: number,
   signal?: AbortSignal,
 ): Promise<SongListResponse> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/song/list?page=${page}&size=${size}`,
-    { signal },
-  );
+  const res = await fetchWithAuth(`/api/song/list?page=${page}&size=${size}`, {
+    signal,
+  });
   if (!res.ok) throw new Error('API error');
   return res.json();
 }
@@ -36,8 +35,8 @@ export async function searchSongs(
   target: string = 'ALL',
   signal?: AbortSignal,
 ): Promise<SongListResponse> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/es/song/search?keyword=${encodeURIComponent(
+  const res = await fetchWithAuth(
+    `/api/es/song/search?keyword=${encodeURIComponent(
       query,
     )}&target=${target}&page=${page}&size=${size}`,
     { signal },
@@ -47,7 +46,7 @@ export async function searchSongs(
 }
 
 export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
-  const res = await fetch(`${API_BASE_URL}/api/song/batch`, {
+  const res = await fetchWithAuth(`/api/song/batch`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(songIds),
@@ -64,7 +63,7 @@ export const requestRecommendation = async (
   text: string,
   favoriteSongIds: number[],
 ): Promise<RecommendationResponse> => {
-  const res = await fetch(`${API_BASE_URL}/api/recommendation/request`, {
+  const res = await fetchWithAuth(`/api/recommendation/request`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
