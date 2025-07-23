@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fetchMyLikes, toggleLike } from '../api/song';
 
 const FAVORITES_KEY = 'FAVORITE_SONGS';
 
@@ -20,24 +21,42 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
   const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
-    AsyncStorage.getItem(FAVORITES_KEY).then(data => {
-      if (data) setFavorites(JSON.parse(data));
-    });
+    (async () => {
+      try {
+        const ids = await fetchMyLikes();
+        setFavorites(ids.map(String));
+        await AsyncStorage.setItem(
+          FAVORITES_KEY,
+          JSON.stringify(ids.map(String)),
+        );
+      } catch {
+        const cached = await AsyncStorage.getItem(FAVORITES_KEY);
+        if (cached) setFavorites(JSON.parse(cached));
+      }
+    })();
   }, []);
 
-  const saveFavorites = (newFavorites: string[]) => {
-    setFavorites(newFavorites);
-    AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites));
+  const saveFavorites = async (next: string[]) => {
+    setFavorites(next);
+    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
   };
 
   const addFavorite = (id: string) => {
-    if (!favorites.includes(id)) {
-      saveFavorites([...favorites, id]);
-    }
+    if (favorites.includes(id)) return;
+    toggleLike(Number(id))
+      .then(({ liked }) => {
+        if (liked) saveFavorites([...favorites, id]);
+      })
+      .catch(console.error);
   };
 
   const removeFavorite = (id: string) => {
-    saveFavorites(favorites.filter(favId => favId !== id));
+    if (!favorites.includes(id)) return;
+    toggleLike(Number(id))
+      .then(({ liked }) => {
+        if (!liked) saveFavorites(favorites.filter(f => f !== id));
+      })
+      .catch(console.error);
   };
 
   const isFavorite = (id: string) => favorites.includes(id);

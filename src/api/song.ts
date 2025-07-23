@@ -76,3 +76,17 @@ export const requestRecommendation = async (
   if (!res.ok) throw new Error('API error');
   return res.json();
 };
+
+export async function toggleLike(songId: number) {
+  const res = await fetchWithAuth(`/api/likes/songs/${songId}`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error('toggle like failed');
+  return res.json() as Promise<{ songId: number; liked: boolean }>;
+}
+
+export async function fetchMyLikes(): Promise<Song[]> {
+  const res = await fetchWithAuth('/api/likes');
+  if (!res.ok) throw new Error('get likes failed');
+  return res.json();
+}
