@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '@env';
+import fetchWithAuth from './fetchWithAuth';
 
 export interface Song {
   songId: number;
@@ -21,10 +21,9 @@ export async function fetchSongs(
   size: number,
   signal?: AbortSignal,
 ): Promise<SongListResponse> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/song/list?page=${page}&size=${size}`,
-    { signal },
-  );
+  const res = await fetchWithAuth(`/api/song/list?page=${page}&size=${size}`, {
+    signal,
+  });
   if (!res.ok) throw new Error('API error');
   return res.json();
 }
@@ -36,18 +35,20 @@ export async function searchSongs(
   target: string = 'ALL',
   signal?: AbortSignal,
 ): Promise<SongListResponse> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/es/song/search?keyword=${encodeURIComponent(
+  const res = await fetchWithAuth(
+    `/api/es/song/search?keyword=${encodeURIComponent(
       query,
     )}&target=${target}&page=${page}&size=${size}`,
     { signal },
   );
-  if (!res.ok) throw new Error('API error');
+  if (!res.ok) {
+    throw new Error('검색에 실패했습니다');
+  }
   return res.json();
 }
 
 export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
-  const res = await fetch(`${API_BASE_URL}/api/song/batch`, {
+  const res = await fetchWithAuth(`/api/song/batch`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(songIds),
@@ -64,7 +65,7 @@ export const requestRecommendation = async (
   text: string,
   favoriteSongIds: number[],
 ): Promise<RecommendationResponse> => {
-  const res = await fetch(`${API_BASE_URL}/api/recommendation/request`, {
+  const res = await fetchWithAuth(`/api/recommendation/request`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -75,3 +76,17 @@ export const requestRecommendation = async (
   if (!res.ok) throw new Error('API error');
   return res.json();
 };
+
+export async function toggleLike(songId: number) {
+  const res = await fetchWithAuth(`/api/likes/songs/${songId}`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error('toggle like failed');
+  return res.json() as Promise<{ songId: number; liked: boolean }>;
+}
+
+export async function fetchMyLikes(): Promise<Song[]> {
+  const res = await fetchWithAuth('/api/likes');
+  if (!res.ok) throw new Error('get likes failed');
+  return res.json();
+}

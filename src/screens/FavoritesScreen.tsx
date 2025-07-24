@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, View } from 'react-native';
-import { fetchSongsByIds, Song } from '../api/song';
+import { fetchMyLikes, Song } from '../api/song';
 import SongListItem from '../components/SongListItem';
 import { useFavorites } from '../hooks/FavoritesContext';
 import styles from './FavoritesScreen.styles';
@@ -19,8 +19,9 @@ const FavoritesScreen = () => {
       return;
     }
     setLoading(true);
-    fetchSongsByIds(favorites)
-      .then(data => setSongs(data))
+    fetchMyLikes()
+      .then(setSongs)
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, [favorites]);
 
@@ -54,7 +55,7 @@ const FavoritesScreen = () => {
   return (
     <FlatList
       style={styles.list}
-      data={favoriteSongs}
+      data={songs}
       keyExtractor={item => item.songId.toString()}
       renderItem={renderItem}
     />

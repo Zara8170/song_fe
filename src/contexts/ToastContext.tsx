@@ -23,13 +23,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const showToast = useCallback((message: string) => {
-    // 기존 Toast가 떠 있으면 즉시 닫고 새 메시지로 교체
     setToast({ visible: false, message: '' });
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    // 약간의 딜레이 후 새 Toast 표시 (애니메이션 자연스럽게)
     setTimeout(() => {
       setToast({ visible: true, message });
     }, 100);
