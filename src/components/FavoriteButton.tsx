@@ -1,37 +1,25 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useFavorites } from '../hooks/FavoritesContext';
 
-type Props = {
-  songId: string;
-  onAdd?: () => void;
-  onRemove?: () => void;
-};
+interface FavoriteButtonProps {
+  isFavorite: boolean;
+  onPress: () => void;
+}
 
-export default function FavoriteButton({ songId, onAdd, onRemove }: Props) {
-  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-
-  const toggleFavorite = () => {
-    if (isFavorite(songId)) {
-      removeFavorite(songId);
-      if (onRemove) onRemove();
-    } else {
-      addFavorite(songId);
-      if (onAdd) onAdd();
-    }
-  };
-
+const FavoriteButton: React.FC<FavoriteButtonProps> = ({
+  isFavorite,
+  onPress,
+}) => {
   return (
-    <TouchableOpacity
-      onPress={toggleFavorite}
-      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-    >
+    <TouchableOpacity onPress={onPress} style={{ padding: 10 }}>
       <Icon
-        name="star"
+        name={isFavorite ? 'star' : 'star-o'}
         size={24}
-        color={isFavorite(songId) ? 'gold' : 'gray'}
+        color={isFavorite ? '#FFD700' : '#E0E0E0'}
       />
     </TouchableOpacity>
   );
-}
+};
+
+export default FavoriteButton;

@@ -13,18 +13,15 @@ import { requestRecommendation } from '../api/song';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './RecommandScreenStyles';
 import { useFavorites } from '../hooks/FavoritesContext';
-
-interface Message {
-  id: string;
-  text: string;
-  sender: 'user' | 'bot';
-}
+import { useToast } from '../contexts/ToastContext';
+import { Message } from '../props/Message';
 
 const RecommandScreen = () => {
   const { favorites } = useFavorites();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -55,14 +52,7 @@ const RecommandScreen = () => {
       };
       setMessages(prev => [...prev, botMsg]);
     } catch {
-      setMessages(prev => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          text: '추천을 가져오는 데 실패했습니다.',
-          sender: 'bot',
-        },
-      ]);
+      showToast('추천을 가져오는 데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }

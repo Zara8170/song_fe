@@ -9,6 +9,7 @@ export interface Song {
   title_jp: string;
   artist: string;
   artist_kr: string;
+  likedByMe: boolean;
 }
 
 export interface SongListResponse {
@@ -24,7 +25,6 @@ export async function fetchSongs(
   const res = await fetchWithAuth(`/api/song/list?page=${page}&size=${size}`, {
     signal,
   });
-  if (!res.ok) throw new Error('API error');
   return res.json();
 }
 
@@ -41,9 +41,6 @@ export async function searchSongs(
     )}&target=${target}&page=${page}&size=${size}`,
     { signal },
   );
-  if (!res.ok) {
-    throw new Error('검색에 실패했습니다');
-  }
   return res.json();
 }
 
@@ -53,7 +50,6 @@ export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(songIds),
   });
-  if (!res.ok) throw new Error('API error');
   return res.json();
 }
 
@@ -73,7 +69,6 @@ export const requestRecommendation = async (
       favorite_song_ids: favoriteSongIds,
     }),
   });
-  if (!res.ok) throw new Error('API error');
   return res.json();
 };
 
@@ -81,12 +76,11 @@ export async function toggleLike(songId: number) {
   const res = await fetchWithAuth(`/api/likes/songs/${songId}`, {
     method: 'POST',
   });
-  if (!res.ok) throw new Error('toggle like failed');
   return res.json() as Promise<{ songId: number; liked: boolean }>;
 }
 
 export async function fetchMyLikes(): Promise<Song[]> {
   const res = await fetchWithAuth('/api/likes');
-  if (!res.ok) throw new Error('get likes failed');
-  return res.json();
+  const data = await res.json();
+  return data.filter((song: any) => song && song.songId !== undefined);
 }

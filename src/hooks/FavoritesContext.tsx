@@ -1,15 +1,22 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from 'react';
+import { Song } from '../api/song';
 import { fetchMyLikes, toggleLike } from '../api/song';
+import { useToast } from '../contexts/ToastContext';
 
-const FAVORITES_KEY = 'FAVORITE_SONGS';
-
-type FavoritesContextType = {
-  favorites: string[];
-  addFavorite: (id: string) => void;
-  removeFavorite: (id: string) => void;
-  isFavorite: (id: string) => boolean;
-};
+interface FavoritesContextType {
+  favorites: Song[];
+  addFavorite: (song: Song) => void;
+  removeFavorite: (songId: number) => void;
+  isFavorite: (songId: number) => boolean;
+  loading: boolean;
+  refetchFavorites: () => Promise<void>;
+}
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(
   undefined,
@@ -18,61 +25,81 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
+
+  const loadFavorites = useCallback(async () => {
+    try {
+      setLoading(true);
+      const likedSongs = await fetchMyLikes();
+      console.log(likedSongs);
+      setFavorites(likedSongs);
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
+      showToast('즐겨찾기 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
 
   useEffect(() => {
-    (async () => {
+    loadFavorites();
+  }, [loadFavorites]);
+
+  const addFavorite = useCallback(
+    async (song: Song) => {
       try {
-        const ids = await fetchMyLikes();
-        setFavorites(ids.map(String));
-        await AsyncStorage.setItem(
-          FAVORITES_KEY,
-          JSON.stringify(ids.map(String)),
-        );
-      } catch {
-        const cached = await AsyncStorage.getItem(FAVORITES_KEY);
-        if (cached) setFavorites(JSON.parse(cached));
+        await toggleLike(song.songId);
+        setFavorites(prev => [...prev, song]);
+      } catch (error) {
+        console.error('Failed to add favorite:', error);
+        showToast('즐겨찾기 추가에 실패했습니다.');
       }
-    })();
-  }, []);
+    },
+    [showToast],
+  );
 
-  const saveFavorites = async (next: string[]) => {
-    setFavorites(next);
-    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
-  };
+  const removeFavorite = useCallback(
+    async (songId: number) => {
+      try {
+        await toggleLike(songId);
+        setFavorites(prev => prev.filter(s => s.songId !== songId));
+      } catch (error) {
+        console.error('Failed to remove favorite:', error);
+        showToast('즐겨찾기 삭제에 실패했습니다.');
+      }
+    },
+    [showToast],
+  );
 
-  const addFavorite = (id: string) => {
-    if (favorites.includes(id)) return;
-    toggleLike(Number(id))
-      .then(({ liked }) => {
-        if (liked) saveFavorites([...favorites, id]);
-      })
-      .catch(console.error);
-  };
-
-  const removeFavorite = (id: string) => {
-    if (!favorites.includes(id)) return;
-    toggleLike(Number(id))
-      .then(({ liked }) => {
-        if (!liked) saveFavorites(favorites.filter(f => f !== id));
-      })
-      .catch(console.error);
-  };
-
-  const isFavorite = (id: string) => favorites.includes(id);
+  const isFavorite = useCallback(
+    (songId: number) => {
+      return favorites.some(favorite => favorite.songId === songId);
+    },
+    [favorites],
+  );
 
   return (
     <FavoritesContext.Provider
-      value={{ favorites, addFavorite, removeFavorite, isFavorite }}
+      value={{
+        favorites,
+        addFavorite,
+        removeFavorite,
+        isFavorite,
+        loading,
+        refetchFavorites: loadFavorites,
+      }}
     >
       {children}
     </FavoritesContext.Provider>
   );
 };
 
-export function useFavorites() {
-  const ctx = useContext(FavoritesContext);
-  if (!ctx)
+export const useFavorites = () => {
+  const context = useContext(FavoritesContext);
+  if (context === undefined) {
     throw new Error('useFavorites must be used within a FavoritesProvider');
-  return ctx;
-}
+  }
+  return context;
+};

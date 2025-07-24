@@ -4,6 +4,7 @@ import { Song } from '../api/song';
 import FavoriteButton from './FavoriteButton';
 import styles from './SongListItem.styles';
 import { Marquee } from '@animatereactnative/marquee';
+import { useFavorites } from '../hooks/FavoritesContext';
 
 interface SongListItemProps {
   item: Song;
@@ -18,6 +19,19 @@ const SongListItem: React.FC<SongListItemProps> = ({
   onFavoriteAdd,
   onFavoriteRemove,
 }) => {
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+  const initiallyLiked = isFavorite(item.songId) || item.likedByMe;
+
+  const handleToggleFavorite = () => {
+    if (initiallyLiked) {
+      removeFavorite(item.songId);
+      onFavoriteRemove?.();
+    } else {
+      addFavorite(item);
+      onFavoriteAdd?.();
+    }
+  };
+
   const shouldShowTJ = showFilter === 'ALL' || showFilter === 'TJ';
   const shouldShowKY = showFilter === 'ALL' || showFilter === 'KY';
 
@@ -70,9 +84,8 @@ const SongListItem: React.FC<SongListItemProps> = ({
 
       {/* 즐겨찾기 버튼 */}
       <FavoriteButton
-        songId={item.songId.toString()}
-        onAdd={onFavoriteAdd}
-        onRemove={onFavoriteRemove}
+        isFavorite={initiallyLiked}
+        onPress={handleToggleFavorite}
       />
     </View>
   );

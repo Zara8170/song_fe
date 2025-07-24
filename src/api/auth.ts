@@ -45,7 +45,7 @@ export const loginWithGoogle = async (): Promise<LoginResponseDTO | null> => {
     }
 
     const loginResponse: LoginResponseDTO = await response.json();
-    await saveTokens(loginResponse.accessToken, '');
+    await saveTokens(loginResponse.accessToken);
 
     return loginResponse;
   } catch (error) {

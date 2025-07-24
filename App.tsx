@@ -28,16 +28,21 @@ const App = () => {
 
   const checkLoginStatus = async () => {
     const token = await getAuthToken();
+    if (token) {
+      console.log('--- 로그인 정보 ---');
+      console.log('Access Token:', token);
+      console.log('--------------------');
+    }
     setLoggedIn(!!token);
     setLoading(false);
   };
 
   useEffect(() => {
-    checkLoginStatus(); // 앱 시작 시 최초 실행
+    checkLoginStatus();
 
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active') {
-        checkLoginStatus(); // 앱이 활성화될 때마다 로그인 상태 다시 확인
+        checkLoginStatus();
       }
     });
 
@@ -86,7 +91,7 @@ const App = () => {
                     letterSpacing: 1,
                   }}
                 >
-                  노래방 일본노래 검색
+                  KaraSong
                 </Text>
               </View>
               <NavigationContainer>
