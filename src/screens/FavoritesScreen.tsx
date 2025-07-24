@@ -1,33 +1,20 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { useFavorites } from '../hooks/FavoritesContext';
 import SongListItem from '../components/SongListItem';
 import styles from './FavoritesScreen.styles';
 import { Song } from '../api/song';
 import { useToast } from '../contexts/ToastContext';
-import { useFocusEffect } from '@react-navigation/native';
 
 const FavoritesScreen = () => {
-  const { favorites, loading, refetchFavorites } = useFavorites();
+  const { favorites, syncWithBackend } = useFavorites();
   const [refreshing, setRefreshing] = useState(false);
   const { showToast } = useToast();
-
-  useFocusEffect(
-    useCallback(() => {
-      refetchFavorites();
-    }, [refetchFavorites]),
-  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await refetchFavorites();
+      await syncWithBackend();
     } catch (error) {
       showToast('즐겨찾기 목록을 새로고침하는 데 실패했습니다.');
     } finally {
@@ -36,18 +23,6 @@ const FavoritesScreen = () => {
   };
 
   const renderItem = ({ item }: { item: Song }) => <SongListItem item={item} />;
-
-  if (loading && !refreshing) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator
-          size="large"
-          color="#7ed6f7"
-          style={{ marginTop: 20 }}
-        />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>

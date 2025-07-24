@@ -8,6 +8,12 @@ import React, {
 import { Song } from '../api/song';
 import { fetchMyLikes, toggleLike } from '../api/song';
 import { useToast } from '../contexts/ToastContext';
+import {
+  getFavorites,
+  saveFavorites,
+  addFavoriteToStorage,
+  removeFavoriteFromStorage,
+} from '../utils/favoritesStorage';
 
 interface FavoritesContextType {
   favorites: Song[];
@@ -16,6 +22,7 @@ interface FavoritesContextType {
   isFavorite: (songId: number) => boolean;
   loading: boolean;
   refetchFavorites: () => Promise<void>;
+  syncWithBackend: () => Promise<void>;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(
@@ -26,32 +33,63 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [favorites, setFavorites] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // 로딩을 false로 시작 (로컬 데이터 우선)
   const { showToast } = useToast();
 
-  const loadFavorites = useCallback(async () => {
+  // 로컬 스토리지에서 즐겨찾기 목록 로드
+  const loadFavoritesFromStorage = useCallback(async () => {
+    try {
+      const storedFavorites = await getFavorites();
+      setFavorites(storedFavorites);
+    } catch (error) {
+      console.error('Failed to load favorites from storage:', error);
+    }
+  }, []);
+
+  // 백엔드와 동기화
+  const syncWithBackend = useCallback(async () => {
     try {
       setLoading(true);
       const likedSongs = await fetchMyLikes();
-      console.log(likedSongs);
+      console.log('Synced favorites from backend:', likedSongs);
+      await saveFavorites(likedSongs);
       setFavorites(likedSongs);
     } catch (error) {
-      console.error('Failed to load favorites:', error);
-      showToast('즐겨찾기 목록을 불러오는데 실패했습니다.');
+      console.error('Failed to sync with backend:', error);
+      showToast('백엔드와 동기화에 실패했습니다.');
     } finally {
       setLoading(false);
     }
   }, [showToast]);
 
+  // 앱 시작 시 로컬 데이터 로드 후 백엔드와 동기화
   useEffect(() => {
-    loadFavorites();
-  }, [loadFavorites]);
+    const initializeFavorites = async () => {
+      // 1. 먼저 로컬 데이터 로드 (즉시 표시)
+      await loadFavoritesFromStorage();
+      // 2. 백엔드와 동기화 (백그라운드에서)
+      await syncWithBackend();
+    };
+
+    initializeFavorites();
+  }, [loadFavoritesFromStorage, syncWithBackend]);
 
   const addFavorite = useCallback(
     async (song: Song) => {
       try {
-        await toggleLike(song.songId);
-        setFavorites(prev => [...prev, song]);
+        // 1. 즉시 로컬에 추가
+        const updatedFavorites = await addFavoriteToStorage(song);
+        setFavorites(updatedFavorites);
+
+        // 2. 백그라운드에서 백엔드에 동기화
+        toggleLike(song.songId).catch(error => {
+          console.error('Failed to sync add favorite with backend:', error);
+          // 백엔드 동기화 실패 시 로컬에서도 제거
+          removeFavoriteFromStorage(song.songId).then(revertedFavorites => {
+            setFavorites(revertedFavorites);
+            showToast('즐겨찾기 추가에 실패했습니다.');
+          });
+        });
       } catch (error) {
         console.error('Failed to add favorite:', error);
         showToast('즐겨찾기 추가에 실패했습니다.');
@@ -63,14 +101,27 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
   const removeFavorite = useCallback(
     async (songId: number) => {
       try {
-        await toggleLike(songId);
-        setFavorites(prev => prev.filter(s => s.songId !== songId));
+        // 1. 즉시 로컬에서 제거
+        const updatedFavorites = await removeFavoriteFromStorage(songId);
+        setFavorites(updatedFavorites);
+
+        // 2. 백그라운드에서 백엔드에 동기화
+        toggleLike(songId).catch(async error => {
+          console.error('Failed to sync remove favorite with backend:', error);
+          // 백엔드 동기화 실패 시 로컬에 다시 추가
+          const originalSong = favorites.find(f => f.songId === songId);
+          if (originalSong) {
+            const revertedFavorites = await addFavoriteToStorage(originalSong);
+            setFavorites(revertedFavorites);
+            showToast('즐겨찾기 삭제에 실패했습니다.');
+          }
+        });
       } catch (error) {
         console.error('Failed to remove favorite:', error);
         showToast('즐겨찾기 삭제에 실패했습니다.');
       }
     },
-    [showToast],
+    [showToast, favorites],
   );
 
   const isFavorite = useCallback(
@@ -80,6 +131,11 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
     [favorites],
   );
 
+  // 기존 loadFavorites를 refetchFavorites로 유지 (호환성)
+  const refetchFavorites = useCallback(async () => {
+    await syncWithBackend();
+  }, [syncWithBackend]);
+
   return (
     <FavoritesContext.Provider
       value={{
@@ -88,7 +144,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
         removeFavorite,
         isFavorite,
         loading,
-        refetchFavorites: loadFavorites,
+        refetchFavorites,
+        syncWithBackend,
       }}
     >
       {children}
