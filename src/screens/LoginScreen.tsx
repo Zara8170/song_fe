@@ -16,9 +16,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const { showToast } = useToast();
 
   useEffect(() => {
+    console.log(
+      'Configuring Google Sign-In with webClientId:',
+      GOOGLE_WEB_CLIENT_ID,
+    );
     GoogleSignin.configure({
       webClientId: GOOGLE_WEB_CLIENT_ID,
-      offlineAccess: true,
     });
   }, []);
 

@@ -11,9 +11,24 @@ export interface LoginResponseDTO {
 export const loginWithGoogle = async (): Promise<LoginResponseDTO | null> => {
   try {
     await GoogleSignin.hasPlayServices();
-    const { idToken }: any = await GoogleSignin.signIn();
+    const signInResult: any = await GoogleSignin.signIn();
+
+    console.log(
+      'Full response from GoogleSignin.signIn():',
+      JSON.stringify(signInResult, null, 2),
+    );
+
+    // signIn()이 반환하는 객체의 data 속성에서 idToken을 추출합니다.
+    const idToken = signInResult?.data?.idToken;
+
     if (!idToken) {
-      throw new Error('Google Sign-In failed to get ID token');
+      console.error(
+        'Could not find idToken in the response from GoogleSignin.signIn():',
+        JSON.stringify(signInResult, null, 2),
+      );
+      throw new Error(
+        'Failed to extract idToken from Google Sign-In response.',
+      );
     }
 
     const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
@@ -30,8 +45,6 @@ export const loginWithGoogle = async (): Promise<LoginResponseDTO | null> => {
     }
 
     const loginResponse: LoginResponseDTO = await response.json();
-    // 백엔드에서 refreshToken도 보내준다면 함께 저장해야 합니다.
-    // 현재는 accessToken만 있으므로 refreshToken은 빈 문자열로 저장합니다.
     await saveTokens(loginResponse.accessToken, '');
 
     return loginResponse;

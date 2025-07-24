@@ -1,4 +1,4 @@
-import { fetchWithAuth } from './fetchWithAuth';
+import fetchWithAuth from './fetchWithAuth';
 
 export interface Song {
   songId: number;
