@@ -24,7 +24,6 @@ const SearchScreen = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState('');
   const [recent, setRecent] = useState<string[]>([]);
   const flatListRef = useRef<FlatList>(null);
   const { showToast } = useToast();
@@ -35,7 +34,6 @@ const SearchScreen = () => {
       setResults([]);
       setPage(1);
       setHasMore(true);
-      setError('');
     }, []),
   );
 
@@ -61,7 +59,6 @@ const SearchScreen = () => {
     const searchValue = customQuery ?? query;
     if (!searchValue.trim()) return;
     setLoading(true);
-    setError('');
     try {
       const data = await searchSongs(
         searchValue,
@@ -76,7 +73,7 @@ const SearchScreen = () => {
         flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
       saveRecent(searchValue);
     } catch (e) {
-      setError('검색 중 오류가 발생했습니다.');
+      showToast('검색 중 오류가 발생했습니다.');
       setHasMore(false);
     } finally {
       setLoading(false);
@@ -134,7 +131,6 @@ const SearchScreen = () => {
           </View>
         </View>
       </View>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {results.length === 0 && recent.length > 0 && query.trim() === '' && (
         <View style={styles.recentWrapper}>
           <View style={styles.recentHeader}>
@@ -168,7 +164,7 @@ const SearchScreen = () => {
         }
         contentContainerStyle={{ paddingBottom: 20 }}
       />
-      {!loading && results.length === 0 && query.trim() !== '' && !error && (
+      {!loading && results.length === 0 && query.trim() !== '' && (
         <View style={styles.noResultWrapper}>
           <Text style={styles.noResultText}>검색 결과가 없습니다.</Text>
         </View>
