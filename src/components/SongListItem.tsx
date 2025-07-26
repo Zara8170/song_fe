@@ -20,10 +20,12 @@ const SongListItem: React.FC<SongListItemProps> = ({
   onFavoriteRemove,
 }) => {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-  const initiallyLiked = isFavorite(item.songId) || item.likedByMe;
+
+  // 실시간으로 즐겨찾기 상태를 확인 (로컬 상태를 우선으로)
+  const isCurrentlyFavorite = isFavorite(item.songId);
 
   const handleToggleFavorite = () => {
-    if (initiallyLiked) {
+    if (isCurrentlyFavorite) {
       removeFavorite(item.songId);
       onFavoriteRemove?.();
     } else {
@@ -84,7 +86,7 @@ const SongListItem: React.FC<SongListItemProps> = ({
 
       {/* 즐겨찾기 버튼 */}
       <FavoriteButton
-        isFavorite={initiallyLiked}
+        isFavorite={isCurrentlyFavorite}
         onPress={handleToggleFavorite}
       />
     </View>
