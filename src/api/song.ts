@@ -1,4 +1,4 @@
-import fetchWithAuth from './fetchWithAuth';
+import { fetchWithAuth } from './fetchWithAuth';
 
 export interface Song {
   songId: number;
@@ -15,6 +15,40 @@ export interface Song {
 export interface SongListResponse {
   dtoList: Song[];
   next: boolean;
+}
+
+export interface RecommendationSong {
+  title_jp: string;
+  title_kr: string;
+  artist: string;
+  artist_kr: string;
+  tj_number: string;
+  ky_number: string;
+}
+
+export interface RecommendationGroup {
+  label: string;
+  tagline: string;
+  songs: RecommendationSong[];
+}
+
+export interface RecommendationCandidate {
+  song_id: number;
+  title_jp: string;
+  title_kr: string;
+  artist: string;
+  artist_kr: string;
+  genre: string;
+  mood: string;
+  tj_number: string;
+  ky_number: string;
+  recommendation_type: 'preference' | 'random';
+  matched_criteria: string[];
+}
+
+export interface RecommendationResponse {
+  groups: RecommendationGroup[];
+  candidates: RecommendationCandidate[];
 }
 
 export async function fetchSongs(
@@ -53,23 +87,40 @@ export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
   return res.json();
 }
 
-interface RecommendationResponse {
-  message: string;
-}
-
 export const requestRecommendation = async (
-  text: string,
   favoriteSongIds: number[],
 ): Promise<RecommendationResponse> => {
-  const res = await fetchWithAuth(`/api/recommendation/request`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text,
-      favorite_song_ids: favoriteSongIds,
-    }),
-  });
-  return res.json();
+  const requestBody = {
+    favorite_song_ids: favoriteSongIds,
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const res = await fetchWithAuth('/api/recommendation/request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out after 30 seconds');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };
 
 export async function toggleLike(songId: number) {

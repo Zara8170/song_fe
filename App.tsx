@@ -28,11 +28,6 @@ const App = () => {
 
   const checkLoginStatus = async () => {
     const token = await getAuthToken();
-    if (token) {
-      console.log('--- 로그인 정보 ---');
-      console.log('Access Token:', token);
-      console.log('--------------------');
-    }
     setLoggedIn(!!token);
     setLoading(false);
   };
@@ -157,7 +152,7 @@ const App = () => {
                       tabBarLabel: '노래 추천',
                       tabBarIcon: ({ color, size }) => (
                         <Ionicons
-                          name="chatbox-ellipses-outline"
+                          name="sparkles-outline"
                           color={color}
                           size={size ?? 22}
                         />
