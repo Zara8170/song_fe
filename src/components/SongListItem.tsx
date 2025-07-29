@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { Song } from '../api/song';
 import FavoriteButton from './FavoriteButton';
@@ -20,10 +20,16 @@ const SongListItem: React.FC<SongListItemProps> = ({
   onFavoriteRemove,
 }) => {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-  const initiallyLiked = isFavorite(item.songId) || item.likedByMe;
+
+  // View와 텍스트 크기 측정을 위한 상태
+  const [songInfoWidth, setSongInfoWidth] = useState(0);
+  const [mainTitleWidth, setMainTitleWidth] = useState(0);
+  const [subTitleWidth, setSubTitleWidth] = useState(0);
+
+  const isCurrentlyFavorite = isFavorite(item.songId);
 
   const handleToggleFavorite = () => {
-    if (initiallyLiked) {
+    if (isCurrentlyFavorite) {
       removeFavorite(item.songId);
       onFavoriteRemove?.();
     } else {
@@ -36,13 +42,13 @@ const SongListItem: React.FC<SongListItemProps> = ({
   const shouldShowKY = showFilter === 'ALL' || showFilter === 'KY';
 
   // 곡 정보 텍스트
-  const mainTitle = [item.title_kr, ' - ', item.artist_kr].join('');
-  const subTitle = [item.title_jp || item.title_en, ' - ', item.artist].join(
-    '',
-  );
+  const mainTitle = item.title_jp || item.title_en;
+  const subTitle = item.artist;
 
-  const TITLE_LENGTH_THRESHOLD = 25;
-  const SUBTITLE_LENGTH_THRESHOLD = 25;
+  const shouldShowMainTitleMarquee =
+    mainTitleWidth > songInfoWidth && songInfoWidth > 0;
+  const shouldShowSubTitleMarquee =
+    subTitleWidth > songInfoWidth && songInfoWidth > 0;
 
   return (
     <View style={styles.resultItem}>
@@ -61,22 +67,43 @@ const SongListItem: React.FC<SongListItemProps> = ({
       </View>
 
       {/* 곡 정보 */}
-      <View style={styles.songInfo}>
-        {mainTitle.length > TITLE_LENGTH_THRESHOLD ? (
-          <Marquee speed={0.5} spacing={20} style={{ width: '100%' }}>
+      <View
+        style={styles.songInfo}
+        onLayout={event => {
+          setSongInfoWidth(event.nativeEvent.layout.width);
+        }}
+      >
+        {shouldShowMainTitleMarquee ? (
+          <Marquee speed={0.3} spacing={150} style={{ width: '100%' }}>
             <Text style={styles.songTitle}>{mainTitle}</Text>
           </Marquee>
         ) : (
-          <Text style={styles.songTitle} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={styles.songTitle}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            onTextLayout={event => {
+              const textWidth = event.nativeEvent.lines[0]?.width || 0;
+              setMainTitleWidth(textWidth);
+            }}
+          >
             {mainTitle}
           </Text>
         )}
-        {subTitle.length > SUBTITLE_LENGTH_THRESHOLD ? (
-          <Marquee speed={0.5} spacing={20} style={{ width: '100%' }}>
+        {shouldShowSubTitleMarquee ? (
+          <Marquee speed={0.3} spacing={150} style={{ width: '100%' }}>
             <Text style={styles.songSub}>{subTitle}</Text>
           </Marquee>
         ) : (
-          <Text style={styles.songSub} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={styles.songSub}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            onTextLayout={event => {
+              const textWidth = event.nativeEvent.lines[0]?.width || 0;
+              setSubTitleWidth(textWidth);
+            }}
+          >
             {subTitle}
           </Text>
         )}
@@ -84,7 +111,7 @@ const SongListItem: React.FC<SongListItemProps> = ({
 
       {/* 즐겨찾기 버튼 */}
       <FavoriteButton
-        isFavorite={initiallyLiked}
+        isFavorite={isCurrentlyFavorite}
         onPress={handleToggleFavorite}
       />
     </View>
