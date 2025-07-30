@@ -5,6 +5,29 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#23292e',
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  developmentText: {
+    fontSize: 60,
+    marginBottom: 20,
+  },
+  developmentTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  developmentSubtitle: {
+    fontSize: 16,
+    color: '#aaa',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
   topHeader: {
     backgroundColor: '#23292e',
   },
