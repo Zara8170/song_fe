@@ -42,41 +42,55 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // MainScreen에서 가져온 탭바 스타일들
+  tabBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 12,
+    position: 'relative',
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  tabText: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    paddingVertical: 8,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    overflow: 'hidden',
+  },
+  tabTextActive: {
+    color: '#7ed6f7',
+    backgroundColor: '#2d3436',
+  },
+  tabTextInactive: {
+    color: '#aaa',
+    backgroundColor: 'transparent',
+  },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    width: '33.33%',
+    height: 4,
+    backgroundColor: '#7ed6f7',
+    borderRadius: 2,
+    zIndex: 1,
+  },
+  // MainScreen에서 가져온 리스트 스타일들
+  list: {
+    flex: 1,
+  },
+  loadingContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   errorText: {
     color: '#ff7675',
     textAlign: 'center',
     marginBottom: 8,
-  },
-  recentWrapper: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  recentTitle: {
-    color: '#aaa',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  recentClear: {
-    color: '#7ed6f7',
-    fontWeight: 'bold',
-    fontSize: 14,
-    padding: 4,
-  },
-  recentKeyword: {
-    color: '#4b8cff',
-    fontWeight: 'bold',
-    fontSize: 16,
-    height: 36,
-    lineHeight: 36,
-    marginBottom: 4,
-    borderRadius: 8,
-    paddingLeft: 4,
   },
   noResultWrapper: {
     flex: 1,
