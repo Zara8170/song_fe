@@ -25,6 +25,7 @@ const SearchScreen = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [recent, setRecent] = useState<string[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const { showToast } = useToast();
 
@@ -34,6 +35,7 @@ const SearchScreen = () => {
       setResults([]);
       setPage(1);
       setHasMore(true);
+      setHasSearched(false);
     }, []),
   );
 
@@ -59,6 +61,7 @@ const SearchScreen = () => {
     const searchValue = customQuery ?? query;
     if (!searchValue.trim()) return;
     setLoading(true);
+    setHasSearched(true);
     try {
       const data = await searchSongs(
         searchValue,
@@ -164,11 +167,14 @@ const SearchScreen = () => {
         }
         contentContainerStyle={{ paddingBottom: 20 }}
       />
-      {!loading && results.length === 0 && query.trim() !== '' && (
-        <View style={styles.noResultWrapper}>
-          <Text style={styles.noResultText}>검색 결과가 없습니다.</Text>
-        </View>
-      )}
+      {!loading &&
+        results.length === 0 &&
+        query.trim() !== '' &&
+        hasSearched && (
+          <View style={styles.noResultWrapper}>
+            <Text style={styles.noResultText}>검색 결과가 없습니다.</Text>
+          </View>
+        )}
     </View>
   );
 };

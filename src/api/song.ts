@@ -20,6 +20,7 @@ export interface SongListResponse {
 export interface RecommendationSong {
   title_jp: string;
   title_kr: string;
+  title_en: string;
   artist: string;
   artist_kr: string;
   tj_number: string;
@@ -36,6 +37,7 @@ export interface RecommendationCandidate {
   song_id: number;
   title_jp: string;
   title_kr: string;
+  title_en: string;
   artist: string;
   artist_kr: string;
   genre: string;
