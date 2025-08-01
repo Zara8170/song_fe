@@ -14,6 +14,11 @@ import {
   addFavoriteToStorage,
   removeFavoriteFromStorage,
 } from '../utils/favoritesStorage';
+import {
+  getOrCreateLikedSongsPlaylist,
+  addSongToPlaylist,
+  removeSongFromPlaylist,
+} from '../api/playlist';
 
 interface FavoritesContextType {
   favorites: Song[];
@@ -102,7 +107,21 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
           });
 
         const apiStartTime = Date.now();
-        toggleLike(song.songId)
+        Promise.all([
+          toggleLike(song.songId),
+          // "좋아요 표시한 음악" 플레이리스트에도 추가
+          (async () => {
+            try {
+              const likedSongsPlaylist = await getOrCreateLikedSongsPlaylist();
+              await addSongToPlaylist(likedSongsPlaylist.playlistId, {
+                songId: song.songId,
+              });
+            } catch (error) {
+              console.error('Failed to add song to liked playlist:', error);
+              // 플레이리스트 추가 실패는 무시 (백엔드 동기화만 성공하면 됨)
+            }
+          })(),
+        ])
           .then(() => {
             console.log(
               `🌐 [성능] 백엔드 API 완료: ${Date.now() - apiStartTime}ms`,
@@ -158,7 +177,25 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
           });
 
         const apiStartTime = Date.now();
-        toggleLike(songId)
+        Promise.all([
+          toggleLike(songId),
+          // "좋아요 표시한 음악" 플레이리스트에서도 삭제
+          (async () => {
+            try {
+              const likedSongsPlaylist = await getOrCreateLikedSongsPlaylist();
+              await removeSongFromPlaylist(
+                likedSongsPlaylist.playlistId,
+                songId,
+              );
+            } catch (error) {
+              console.error(
+                'Failed to remove song from liked playlist:',
+                error,
+              );
+              // 플레이리스트 삭제 실패는 무시 (백엔드 동기화만 성공하면 됨)
+            }
+          })(),
+        ])
           .then(() => {
             console.log(
               `🌐 [성능] 백엔드 API 완료: ${Date.now() - apiStartTime}ms`,

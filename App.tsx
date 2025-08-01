@@ -11,11 +11,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MainScreen from './src/screens/MainScreen';
 import SearchScreen from './src/screens/SearchScreen';
-import FavoritesScreen from './src/screens/FavoritesScreen';
+import LibraryScreen from './src/screens/LibraryScreen';
 import RecommandScreen from './src/screens/RecommandScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import { FavoritesProvider } from './src/hooks/FavoritesContext';
 import { ToastProvider } from './src/contexts/ToastContext';
 import { getAuthToken } from './src/api/auth';
@@ -132,14 +131,14 @@ const App = () => {
                     }}
                   />
                   <Tab.Screen
-                    name="Favorites"
-                    component={FavoritesScreen}
+                    name="Library"
+                    component={LibraryScreen}
                     options={{
-                      tabBarLabel: '즐겨찾기',
-                      tabBarIcon: ({ focused, size }) => (
-                        <Icon
-                          name="star"
-                          color={focused ? 'gold' : 'gray'}
+                      tabBarLabel: '보관함',
+                      tabBarIcon: ({ color, size }) => (
+                        <Ionicons
+                          name="library-outline"
+                          color={color}
                           size={size ?? 22}
                         />
                       ),
