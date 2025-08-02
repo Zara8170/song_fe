@@ -216,11 +216,13 @@ const SearchScreen = () => {
 
   const currentData = hasSearched && query.trim() ? searchResults : allSongs;
 
-  const filteredData = currentData.filter(song => {
-    if (filter === 'TJ') return !!song.tj_number;
-    if (filter === 'KY') return !!song.ky_number;
-    return true;
-  });
+  const filteredData = Array.isArray(currentData)
+    ? currentData.filter(song => {
+        if (filter === 'TJ') return !!song.tj_number;
+        if (filter === 'KY') return !!song.ky_number;
+        return true;
+      })
+    : [];
 
   const renderItem = ({ item }: { item: Song }) => (
     <SongListItem

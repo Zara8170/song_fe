@@ -135,5 +135,12 @@ export async function toggleLike(songId: number) {
 export async function fetchMyLikes(): Promise<Song[]> {
   const res = await fetchWithAuth('/api/likes');
   const data = await res.json();
+
+  // 백엔드 응답이 배열이 아닌 경우 빈 배열 반환
+  if (!Array.isArray(data)) {
+    console.warn('fetchMyLikes: Backend response is not an array:', data);
+    return [];
+  }
+
   return data.filter((song: any) => song && song.songId !== undefined);
 }
