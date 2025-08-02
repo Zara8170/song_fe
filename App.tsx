@@ -17,7 +17,8 @@ import LoginScreen from './src/screens/LoginScreen';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { FavoritesProvider } from './src/hooks/FavoritesContext';
 import { ToastProvider } from './src/contexts/ToastContext';
-import { getAuthToken } from './src/api/auth';
+import { refreshAccessToken } from './src/api/auth';
+import { getAccessToken } from './src/utils/tokenStorage';
 
 const Tab = createBottomTabNavigator();
 
@@ -26,9 +27,30 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   const checkLoginStatus = async () => {
-    const token = await getAuthToken();
-    setLoggedIn(!!token);
-    setLoading(false);
+    try {
+      const token = await getAccessToken();
+
+      if (!token) {
+        setLoggedIn(false);
+        setLoading(false);
+        return;
+      }
+
+      // 앱 시작 시 토큰 갱신 시도
+      try {
+        await refreshAccessToken(token);
+        setLoggedIn(true);
+      } catch (error) {
+        // 토큰 갱신 실패 시 로그아웃 상태로 전환
+        console.log('Token refresh failed on app start:', error);
+        setLoggedIn(false);
+      }
+    } catch (error) {
+      console.log('Login status check failed:', error);
+      setLoggedIn(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

@@ -89,7 +89,6 @@ export default StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  // Floating Action Button
   fab: {
     position: 'absolute',
     bottom: 20,
@@ -106,7 +105,6 @@ export default StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -204,7 +202,6 @@ export default StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  // 플레이리스트 액션 관련 스타일
   playlistActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -214,7 +211,6 @@ export default StyleSheet.create({
     padding: 8,
     borderRadius: 20,
   },
-  // 액션시트 스타일
   actionSheetOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -227,7 +223,7 @@ export default StyleSheet.create({
     backgroundColor: '#2a3138',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingBottom: 34, // Safe area bottom
+    paddingBottom: 40,
   },
   actionSheetHeader: {
     padding: 20,
@@ -253,20 +249,78 @@ export default StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     gap: 12,
+    marginBottom: 8,
   },
-  actionSheetCancelButton: {
-    borderTopWidth: 1,
-    borderTopColor: '#3a4147',
-    justifyContent: 'center',
-  },
+
   actionSheetDeleteText: {
     fontSize: 16,
     color: '#ff4444',
     fontWeight: '500',
   },
-  actionSheetCancelText: {
+  removeConfirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  removeConfirmContainer: {
+    backgroundColor: '#2a3138',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+  },
+  removeConfirmTitle: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  removeConfirmMessage: {
+    fontSize: 14,
     color: '#aaa',
-    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  removeConfirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  removeConfirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  removeConfirmCancelButton: {
+    backgroundColor: '#3a4147',
+  },
+  removeConfirmDeleteButton: {
+    backgroundColor: '#ff4444',
+  },
+  removeConfirmCancelText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  removeConfirmDeleteText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 50,
+  },
+  loadingText: {
+    color: '#aaa',
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
   },
 });

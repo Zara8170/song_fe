@@ -63,6 +63,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'transparent',
   },
+  playlistRemoveButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+  },
   // Modal styles
   modalOverlay: {
     flex: 1,

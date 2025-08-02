@@ -126,7 +126,12 @@ export async function deletePlaylist(playlistId: number): Promise<void> {
  */
 export async function getMyPlaylists(): Promise<Playlist[]> {
   const res = await fetchWithAuth('/api/playlist/my');
-  return res.json();
+  const playlists = await res.json();
+
+  // 생성일 기준으로 오름차순 정렬 (오래된 것부터)
+  return playlists.sort((a: Playlist, b: Playlist) => {
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
 }
 
 /**
@@ -164,7 +169,12 @@ export async function searchPlaylists(title: string): Promise<Playlist[]> {
   const res = await fetchWithAuth(
     `/api/playlist/search?title=${encodeURIComponent(title)}`,
   );
-  return res.json();
+  const playlists = await res.json();
+
+  // 생성일 기준으로 오름차순 정렬 (오래된 것부터)
+  return playlists.sort((a: Playlist, b: Playlist) => {
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
 }
 
 // 3. 플레이리스트 곡 관리

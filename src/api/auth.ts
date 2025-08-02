@@ -45,7 +45,7 @@ export const loginWithGoogle = async (
 
 export const refreshAccessToken = async (
   expiredToken: string,
-): Promise<{ accessToken: string }> => {
+): Promise<string> => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/member/refresh`, {
       method: 'POST',
@@ -61,7 +61,7 @@ export const refreshAccessToken = async (
     const tokenData = await response.json();
     await saveTokens(tokenData.accessToken);
 
-    return { accessToken: tokenData.accessToken };
+    return tokenData.accessToken;
   } catch (error) {
     throw error;
   }

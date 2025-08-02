@@ -116,8 +116,57 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
               await addSongToPlaylist(likedSongsPlaylist.playlistId, {
                 songId: song.songId,
               });
-            } catch (error) {
+            } catch (error: any) {
               console.error('Failed to add song to liked playlist:', error);
+
+              // 중복 추가 에러인 경우 무시 (이미 추가된 상태이므로 정상)
+              if (error?.responseData) {
+                // fetchWithAuth에서 미리 읽어온 에러 데이터 사용
+                let message;
+                if (typeof error.responseData === 'string') {
+                  message = error.responseData;
+                } else if (typeof error.responseData === 'object') {
+                  message =
+                    error.responseData?.message ||
+                    error.responseData?.error ||
+                    error.responseData?.detail ||
+                    error.responseData?.errMsg;
+                }
+
+                if (
+                  message &&
+                  message.includes('이미 플레이리스트에 추가된 곡입니다')
+                ) {
+                  // 중복 추가는 정상적인 상황이므로 에러 무시
+                  return;
+                }
+              } else if (error?.response) {
+                try {
+                  const errorData = await error.response.json();
+                  if (
+                    (errorData?.message &&
+                      errorData.message.includes(
+                        '이미 플레이리스트에 추가된 곡입니다',
+                      )) ||
+                    (errorData?.errMsg &&
+                      errorData.errMsg.includes(
+                        '이미 플레이리스트에 추가된 곡입니다',
+                      ))
+                  ) {
+                    // 중복 추가는 정상적인 상황이므로 에러 무시
+                    return;
+                  }
+                } catch (parseError) {
+                  // JSON 파싱 실패 시 기존 로직 유지
+                }
+              } else if (
+                error?.message &&
+                error.message.includes('이미 플레이리스트에 추가된 곡입니다')
+              ) {
+                // 중복 추가는 정상적인 상황이므로 에러 무시
+                return;
+              }
+
               // 플레이리스트 추가 실패는 무시 (백엔드 동기화만 성공하면 됨)
             }
           })(),

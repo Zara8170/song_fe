@@ -5,14 +5,17 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  Modal,
-  TextInput,
-  Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useFavorites } from '../hooks/FavoritesContext';
 import SongListItem from '../components/SongListItem';
+import PlaylistCreateModal from '../components/PlaylistCreateModal';
+import PlaylistActionSheet from '../components/PlaylistActionSheet';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import PlaylistItem from '../components/PlaylistItem';
+import FloatingActionButton from '../components/FloatingActionButton';
 import styles from './LibraryScreen.styles';
 import { Song } from '../api/song';
 import { useToast } from '../contexts/ToastContext';
@@ -23,6 +26,7 @@ import {
   getPlaylistSongs,
   createPlaylist,
   deletePlaylist,
+  removeSongFromPlaylist,
   PlaylistCreateDTO,
 } from '../api/playlist';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -34,14 +38,14 @@ interface LibraryScreenProps {
 const LibraryScreen: React.FC<LibraryScreenProps> = ({
   navigation: _navigation,
 }) => {
-  const { favorites, syncWithBackend } = useFavorites();
+  const { favorites, syncWithBackend, removeFavorite } = useFavorites();
   const [refreshing, setRefreshing] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
     null,
   );
   const [playlistSongs, setPlaylistSongs] = useState<Song[]>([]);
-  const [_loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPlaylistTitle, setNewPlaylistTitle] = useState('');
   const [newPlaylistDescription, setNewPlaylistDescription] = useState('');
@@ -51,6 +55,13 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
   const [selectedPlaylistForAction, setSelectedPlaylistForAction] =
     useState<Playlist | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [removingSong, setRemovingSong] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [selectedSongForRemoval, setSelectedSongForRemoval] = useState<
+    number | null
+  >(null);
+  const [showDeletePlaylistConfirm, setShowDeletePlaylistConfirm] =
+    useState(false);
   const { showToast } = useToast();
 
   const loadPlaylistSongs = useCallback(
@@ -133,6 +144,8 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
   const goBackToPlaylists = () => {
     setSelectedPlaylist(null);
     setPlaylistSongs([]);
+    setLoading(true);
+    loadPlaylists();
   };
 
   const openCreateModal = () => {
@@ -182,59 +195,108 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
     }
   };
 
-  // 액션시트 열기
   const openActionSheet = (playlist: Playlist, event: any) => {
-    event.stopPropagation(); // 플레이리스트 선택 이벤트 방지
+    event.stopPropagation();
     setSelectedPlaylistForAction(playlist);
     setShowActionSheet(true);
   };
 
-  // 액션시트 닫기
   const closeActionSheet = () => {
     setShowActionSheet(false);
     setSelectedPlaylistForAction(null);
   };
 
-  // 플레이리스트 삭제
-  const handleDeletePlaylist = async () => {
+  const handleDeletePlaylist = () => {
+    if (!selectedPlaylistForAction) return;
+    setShowActionSheet(false);
+    setTimeout(() => {
+      setShowDeletePlaylistConfirm(true);
+    }, 100);
+  };
+
+  const confirmDeletePlaylist = async () => {
     if (!selectedPlaylistForAction) return;
 
-    Alert.alert(
-      '플레이리스트 삭제',
-      `"${selectedPlaylistForAction.title}"을(를) 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setDeleting(true);
-              await deletePlaylist(selectedPlaylistForAction.playlistId);
-              showToast('플레이리스트가 삭제되었습니다.');
+    try {
+      setDeleting(true);
+      await deletePlaylist(selectedPlaylistForAction.playlistId);
+      showToast('플레이리스트가 삭제되었습니다.');
 
-              // 삭제된 플레이리스트가 현재 선택된 플레이리스트라면 목록으로 돌아가기
-              if (
-                selectedPlaylist?.playlistId ===
-                selectedPlaylistForAction.playlistId
-              ) {
-                setSelectedPlaylist(null);
-                setPlaylistSongs([]);
-              }
+      if (
+        selectedPlaylist?.playlistId === selectedPlaylistForAction.playlistId
+      ) {
+        setSelectedPlaylist(null);
+        setPlaylistSongs([]);
+      }
 
-              // 목록 새로고침
-              await loadPlaylists();
-              closeActionSheet();
-            } catch (error) {
-              console.error('Failed to delete playlist:', error);
-              showToast('플레이리스트 삭제에 실패했습니다.');
-            } finally {
-              setDeleting(false);
-            }
-          },
-        },
-      ],
-    );
+      await loadPlaylists();
+    } catch (error) {
+      console.error('Failed to delete playlist:', error);
+      showToast('플레이리스트 삭제에 실패했습니다.');
+    } finally {
+      setDeleting(false);
+      setShowDeletePlaylistConfirm(false);
+      setSelectedPlaylistForAction(null);
+    }
+  };
+
+  const cancelDeletePlaylist = () => {
+    if (!deleting) {
+      setShowDeletePlaylistConfirm(false);
+      setSelectedPlaylistForAction(null);
+    }
+  };
+
+  const handleRemoveSongFromPlaylist = async (songId: number) => {
+    if (!selectedPlaylist) return;
+    setSelectedSongForRemoval(songId);
+    setShowRemoveConfirm(true);
+  };
+
+  const confirmRemoveSong = async () => {
+    if (!selectedPlaylist || !selectedSongForRemoval) return;
+
+    if (selectedPlaylist.title === '좋아요 표시한 음악') {
+      setRemovingSong(true);
+      try {
+        removeFavorite(selectedSongForRemoval);
+        showToast('좋아요에서 제거되었습니다.');
+      } finally {
+        setRemovingSong(false);
+        setShowRemoveConfirm(false);
+        setSelectedSongForRemoval(null);
+      }
+      return;
+    }
+
+    try {
+      setRemovingSong(true);
+      await removeSongFromPlaylist(
+        selectedPlaylist.playlistId,
+        selectedSongForRemoval,
+      );
+      showToast('플레이리스트에서 곡이 제거되었습니다.');
+
+      // 플레이리스트 곡 목록과 플레이리스트 목록 모두 새로고침
+      await Promise.all([
+        loadPlaylistSongs(selectedPlaylist.playlistId, selectedPlaylist.title),
+        loadPlaylists(), // songCount 업데이트를 위해 플레이리스트 목록도 새로고침
+      ]);
+    } catch (error) {
+      console.error('Failed to remove song from playlist:', error);
+      showToast('곡 제거에 실패했습니다.');
+    } finally {
+      setRemovingSong(false);
+      setShowRemoveConfirm(false);
+      setSelectedSongForRemoval(null);
+    }
+  };
+
+  const cancelRemoveSong = () => {
+    if (!removingSong) {
+      setShowRemoveConfirm(false);
+      setSelectedSongForRemoval(null);
+    }
   };
 
   useEffect(() => {
@@ -246,7 +308,9 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
     useCallback(() => {
       setSelectedPlaylist(null);
       setPlaylistSongs([]);
-    }, []),
+      // 화면에 포커스가 올 때마다 플레이리스트 목록 새로고침 (songCount 업데이트)
+      loadPlaylists();
+    }, [loadPlaylists]),
   );
 
   useEffect(() => {
@@ -255,54 +319,39 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
     }
   }, [favorites, selectedPlaylist]);
 
-  const renderPlaylistItem = ({ item }: { item: Playlist }) => {
-    const isLikedPlaylist = item.title === '좋아요 표시한 음악';
-
-    return (
-      <TouchableOpacity
-        style={styles.playlistItem}
-        onPress={() => selectPlaylist(item)}
-      >
-        <View style={styles.playlistInfo}>
-          <Ionicons
-            name={isLikedPlaylist ? 'heart' : 'musical-notes'}
-            size={24}
-            color="#7ed6f7"
-            style={styles.playlistIcon}
-          />
-          <View style={styles.playlistTextContainer}>
-            <Text style={styles.playlistTitle}>{item.title}</Text>
-            {item.description && !isLikedPlaylist && (
-              <Text style={styles.playlistDescription}>{item.description}</Text>
-            )}
-            <Text style={styles.playlistSongCount}>
-              {isLikedPlaylist ? favorites.length : item.songCount}곡
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.playlistActions}>
-          {!isLikedPlaylist && (
-            <TouchableOpacity
-              style={styles.playlistMenuButton}
-              onPress={event => openActionSheet(item, event)}
-            >
-              <Ionicons name="ellipsis-vertical" size={20} color="#aaa" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderPlaylistItem = ({ item }: { item: Playlist }) => (
+    <PlaylistItem
+      playlist={item}
+      favoriteCount={favorites.length}
+      onPress={selectPlaylist}
+      onMenuPress={openActionSheet}
+    />
+  );
 
   const renderSongItem = ({ item }: { item: Song }) => (
     <SongListItem
       item={item}
-      hidePlaylistButton={selectedPlaylist?.title === '좋아요 표시한 음악'}
+      hidePlaylistButton={true}
+      hideRemoveButton={selectedPlaylist?.title === '좋아요 표시한 음악'}
+      onRemoveFromPlaylist={() => handleRemoveSongFromPlaylist(item.songId)}
     />
   );
 
   if (!selectedPlaylist) {
+    if (loading) {
+      return (
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>내 보관함</Text>
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7ed6f7" />
+            <Text style={styles.loadingText}>보관함을 불러오는 중...</Text>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -349,145 +398,40 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
         />
 
         {/* Floating Action Button */}
-        <TouchableOpacity style={styles.fab} onPress={openCreateModal}>
-          <Ionicons name="add" size={28} color="#23292e" />
-        </TouchableOpacity>
+        <FloatingActionButton onPress={openCreateModal} />
 
         {/* 플레이리스트 생성 모달 */}
-        <Modal
+        <PlaylistCreateModal
           visible={showCreateModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={closeCreateModal}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>새 플레이리스트</Text>
-                <TouchableOpacity
-                  onPress={closeCreateModal}
-                  style={styles.modalCloseButton}
-                >
-                  <Ionicons name="close" size={24} color="#aaa" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalContent}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>제목 *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={newPlaylistTitle}
-                    onChangeText={setNewPlaylistTitle}
-                    placeholder="플레이리스트 제목을 입력하세요"
-                    placeholderTextColor="#666"
-                    maxLength={50}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>설명</Text>
-                  <TextInput
-                    style={[styles.textInput, styles.textArea]}
-                    value={newPlaylistDescription}
-                    onChangeText={setNewPlaylistDescription}
-                    placeholder="플레이리스트 설명을 입력하세요 (선택사항)"
-                    placeholderTextColor="#666"
-                    multiline={true}
-                    numberOfLines={3}
-                    maxLength={200}
-                  />
-                </View>
-
-                <View style={styles.switchGroup}>
-                  <Text style={styles.inputLabel}>공개 설정</Text>
-                  <View style={styles.switchRow}>
-                    <Text style={styles.switchLabel}>
-                      {newPlaylistIsPublic ? '공개' : '비공개'}
-                    </Text>
-                    <Switch
-                      value={newPlaylistIsPublic}
-                      onValueChange={setNewPlaylistIsPublic}
-                      trackColor={{ false: '#3a4147', true: '#7ed6f7' }}
-                      thumbColor={newPlaylistIsPublic ? '#fff' : '#aaa'}
-                    />
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.modalFooter}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={closeCreateModal}
-                  disabled={creating}
-                >
-                  <Text style={styles.cancelButtonText}>취소</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.confirmButton]}
-                  onPress={handleCreatePlaylist}
-                  disabled={creating || !newPlaylistTitle.trim()}
-                >
-                  <Text style={styles.confirmButtonText}>
-                    {creating ? '생성 중...' : '생성'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          onClose={closeCreateModal}
+          onConfirm={handleCreatePlaylist}
+          title={newPlaylistTitle}
+          onTitleChange={setNewPlaylistTitle}
+          description={newPlaylistDescription}
+          onDescriptionChange={setNewPlaylistDescription}
+          isPublic={newPlaylistIsPublic}
+          onPublicChange={setNewPlaylistIsPublic}
+          creating={creating}
+        />
 
         {/* 플레이리스트 액션시트 */}
-        <Modal
+        <PlaylistActionSheet
           visible={showActionSheet}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={closeActionSheet}
-        >
-          <View style={styles.actionSheetOverlay}>
-            <TouchableOpacity
-              style={styles.actionSheetBackdrop}
-              onPress={closeActionSheet}
-              activeOpacity={1}
-            />
-            <View style={styles.actionSheetContainer}>
-              <View style={styles.actionSheetHeader}>
-                <View style={styles.actionSheetTitleContainer}>
-                  <Ionicons
-                    name="musical-notes"
-                    size={20}
-                    color="#7ed6f7"
-                    style={styles.actionSheetTitleIcon}
-                  />
-                  <Text style={styles.actionSheetTitle}>
-                    {selectedPlaylistForAction?.title}
-                  </Text>
-                </View>
-              </View>
+          onClose={closeActionSheet}
+          onDelete={handleDeletePlaylist}
+          playlist={selectedPlaylistForAction}
+          deleting={deleting}
+        />
 
-              <TouchableOpacity
-                style={styles.actionSheetButton}
-                onPress={handleDeletePlaylist}
-                disabled={deleting}
-              >
-                <Ionicons name="trash-outline" size={20} color="#ff4444" />
-                <Text style={styles.actionSheetDeleteText}>
-                  {deleting ? '삭제 중...' : '플레이리스트 삭제'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.actionSheetButton,
-                  styles.actionSheetCancelButton,
-                ]}
-                onPress={closeActionSheet}
-              >
-                <Text style={styles.actionSheetCancelText}>취소</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+        {/* 플레이리스트 삭제 확인 모달 */}
+        <DeleteConfirmModal
+          visible={showDeletePlaylistConfirm}
+          onClose={cancelDeletePlaylist}
+          onConfirm={confirmDeletePlaylist}
+          title="플레이리스트 삭제"
+          message={`"${selectedPlaylistForAction?.title}"을(를) 삭제하시겠습니다\n이 작업은 되돌릴 수 없습니다.`}
+          loading={deleting}
+        />
       </View>
     );
   }
@@ -521,6 +465,26 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
             tintColor="#7ed6f7"
           />
         }
+      />
+
+      {/* 곡 삭제 확인 모달 */}
+      <DeleteConfirmModal
+        visible={showRemoveConfirm}
+        onClose={cancelRemoveSong}
+        onConfirm={confirmRemoveSong}
+        title="플레이리스트에서 저장 항목을 삭제할까요?"
+        message="이 곡을 현재 플레이리스트에서 삭제합니다."
+        loading={removingSong}
+      />
+
+      {/* 플레이리스트 삭제 확인 모달 */}
+      <DeleteConfirmModal
+        visible={showDeletePlaylistConfirm}
+        onClose={cancelDeletePlaylist}
+        onConfirm={confirmDeletePlaylist}
+        title="플레이리스트 삭제"
+        message={`"${selectedPlaylistForAction?.title}"을(를) 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`}
+        loading={deleting}
       />
     </View>
   );

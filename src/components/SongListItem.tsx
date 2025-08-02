@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { Song } from '../api/song';
 import FavoriteButton from './FavoriteButton';
 import styles from './SongListItem.styles';
@@ -15,6 +8,7 @@ import { useFavorites } from '../hooks/FavoritesContext';
 import { useToast } from '../contexts/ToastContext';
 import { Playlist, getMyPlaylists, addSongToPlaylist } from '../api/playlist';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import BaseModal from './BaseModal';
 
 interface SongListItemProps {
   item: Song;
@@ -22,6 +16,8 @@ interface SongListItemProps {
   onFavoriteAdd?: () => void;
   onFavoriteRemove?: () => void;
   hidePlaylistButton?: boolean;
+  onRemoveFromPlaylist?: () => void;
+  hideRemoveButton?: boolean;
 }
 
 const SongListItem: React.FC<SongListItemProps> = ({
@@ -30,22 +26,22 @@ const SongListItem: React.FC<SongListItemProps> = ({
   onFavoriteAdd,
   onFavoriteRemove,
   hidePlaylistButton = false,
+  onRemoveFromPlaylist,
+  hideRemoveButton = false,
 }) => {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { showToast } = useToast();
 
-  // View와 텍스트 크기 측정을 위한 상태
   const [songInfoWidth, setSongInfoWidth] = useState(0);
   const [mainTitleWidth, setMainTitleWidth] = useState(0);
   const [subTitleWidth, setSubTitleWidth] = useState(0);
 
-  // 플레이리스트 관련 상태
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(
     null,
   );
-  const [loading, setLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(false);
 
   const isCurrentlyFavorite = isFavorite(item.songId);
 
@@ -59,68 +55,133 @@ const SongListItem: React.FC<SongListItemProps> = ({
     }
   };
 
-  // 플레이리스트 모달 열기
   const openPlaylistModal = async () => {
     try {
-      setLoading(true);
-      setPlaylists([]); // 플레이리스트 상태 초기화
+      setListLoading(true);
+      setPlaylists([]);
       setSelectedPlaylistId(null);
-      setShowPlaylistModal(true); // 모달을 먼저 열어서 로딩 상태를 보여줌
+      setShowPlaylistModal(true);
 
       const allPlaylists = await getMyPlaylists();
 
-      // "좋아요 표시한 음악" 플레이리스트는 제외
       const filteredPlaylists = allPlaylists.filter(
         playlist => playlist.title !== '좋아요 표시한 음악',
       );
 
       if (filteredPlaylists.length === 0) {
-        setPlaylists([]); // 빈 배열로 설정하여 빈 상태 메시지 표시
+        setPlaylists([]);
       } else {
         setPlaylists(filteredPlaylists);
       }
     } catch (error) {
       console.error('Failed to load playlists:', error);
       showToast('플레이리스트 목록을 불러오는 데 실패했습니다.');
-      setShowPlaylistModal(false); // 에러가 발생하면 모달 닫기
+      setShowPlaylistModal(false);
     } finally {
-      setLoading(false);
+      setListLoading(false);
     }
   };
 
-  // 플레이리스트 모달 닫기
   const closePlaylistModal = () => {
     setShowPlaylistModal(false);
     setSelectedPlaylistId(null);
   };
 
-  // 선택한 플레이리스트에 곡 추가
   const handleAddToPlaylist = async () => {
     if (!selectedPlaylistId) {
       Alert.alert('알림', '플레이리스트를 선택해주세요.');
       return;
     }
 
+    const selectedPlaylist = playlists.find(
+      p => p.playlistId === selectedPlaylistId,
+    );
+
+    // 바로 모달창 닫기
+    closePlaylistModal();
+
+    // 백그라운드에서 플레이리스트에 곡 추가 처리
     try {
-      setLoading(true);
       await addSongToPlaylist(selectedPlaylistId, { songId: item.songId });
-      const selectedPlaylist = playlists.find(
-        p => p.playlistId === selectedPlaylistId,
-      );
       showToast(`"${selectedPlaylist?.title}"에 곡이 추가되었습니다.`);
-      closePlaylistModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add song to playlist:', error);
-      showToast('플레이리스트에 곡을 추가하는 데 실패했습니다.');
-    } finally {
-      setLoading(false);
+
+      let errorMessage = '플레이리스트에 곡을 추가하는 데 실패했습니다.';
+
+      if (error?.responseData) {
+        console.log('Error response data:', error.responseData);
+
+        let message;
+        if (typeof error.responseData === 'string') {
+          message = error.responseData;
+        } else if (typeof error.responseData === 'object') {
+          message =
+            error.responseData?.message ||
+            error.responseData?.error ||
+            error.responseData?.detail ||
+            error.responseData?.errMsg;
+        }
+
+        if (
+          message &&
+          message.includes('이미 플레이리스트에 추가된 곡입니다')
+        ) {
+          errorMessage = '이미 플레이리스트에 추가된 곡입니다.';
+        } else if (message) {
+          errorMessage = message;
+        }
+      } else if (error?.response) {
+        try {
+          const errorData = await error.response.json();
+          console.log('Error response data (fallback):', errorData);
+
+          const message =
+            errorData?.message ||
+            errorData?.error ||
+            errorData?.detail ||
+            errorData?.errMsg ||
+            errorData;
+          if (
+            message &&
+            typeof message === 'string' &&
+            message.includes('이미 플레이리스트에 추가된 곡입니다')
+          ) {
+            errorMessage = '이미 플레이리스트에 추가된 곡입니다.';
+          } else if (message && typeof message === 'string') {
+            errorMessage = message;
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response as JSON:', parseError);
+          try {
+            const errorText = await error.response.text();
+            console.log('Error response text:', errorText);
+            if (
+              errorText &&
+              errorText.includes('이미 플레이리스트에 추가된 곡입니다')
+            ) {
+              errorMessage = '이미 플레이리스트에 추가된 곡입니다.';
+            } else if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch (textError) {
+            console.error('Failed to read error response as text:', textError);
+          }
+        }
+      } else if (
+        error?.message &&
+        error.message.includes('이미 플레이리스트에 추가된 곡입니다')
+      ) {
+        errorMessage = '이미 플레이리스트에 추가된 곡입니다.';
+      }
+
+      showToast(errorMessage);
     }
   };
 
   const shouldShowTJ = showFilter === 'ALL' || showFilter === 'TJ';
   const shouldShowKY = showFilter === 'ALL' || showFilter === 'KY';
 
-  // 곡 정보 텍스트
   const mainTitle = item.title_jp || item.title_en;
   const subTitle = item.artist;
 
@@ -129,7 +190,6 @@ const SongListItem: React.FC<SongListItemProps> = ({
   const shouldShowSubTitleMarquee =
     subTitleWidth > songInfoWidth && songInfoWidth > 0;
 
-  // 플레이리스트 목록 아이템 렌더링
   const renderPlaylistItem = ({ item: playlist }: { item: Playlist }) => {
     return (
       <TouchableOpacity
@@ -236,90 +296,97 @@ const SongListItem: React.FC<SongListItemProps> = ({
           <TouchableOpacity
             style={styles.playlistAddButton}
             onPress={openPlaylistModal}
-            disabled={loading}
+            disabled={listLoading}
           >
             <Ionicons name="folder-outline" size={22} color="#aaa" />
+          </TouchableOpacity>
+        )}
+
+        {/* 플레이리스트에서 곡 삭제 버튼 */}
+        {onRemoveFromPlaylist && !hideRemoveButton && (
+          <TouchableOpacity
+            style={styles.playlistRemoveButton}
+            onPress={onRemoveFromPlaylist}
+          >
+            <Ionicons name="remove-circle-outline" size={22} color="#ff4444" />
           </TouchableOpacity>
         )}
       </View>
 
       {/* 플레이리스트 선택 모달 */}
-      <Modal
+      <BaseModal
         visible={showPlaylistModal}
-        transparent={true}
+        onClose={closePlaylistModal}
         animationType="slide"
-        onRequestClose={closePlaylistModal}
+        overlayStyle={styles.modalOverlay}
+        containerStyle={styles.modalContainer}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>플레이리스트에 추가</Text>
-              <TouchableOpacity
-                onPress={closePlaylistModal}
-                style={styles.modalCloseButton}
-              >
-                <Ionicons name="close" size={24} color="#aaa" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalContent}>
-              {loading ? (
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>
-                    플레이리스트를 불러오는 중...
-                  </Text>
-                </View>
-              ) : playlists.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>
-                    사용 가능한 플레이리스트가 없습니다.
-                  </Text>
-                  <Text style={styles.emptySubText}>
-                    먼저 플레이리스트를 생성해주세요.
-                  </Text>
-                </View>
-              ) : (
-                <FlatList
-                  data={playlists}
-                  keyExtractor={playlist => playlist.playlistId.toString()}
-                  renderItem={renderPlaylistItem}
-                  style={styles.playlistList}
-                  showsVerticalScrollIndicator={false}
-                />
-              )}
-            </View>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={closePlaylistModal}
-                disabled={loading}
-              >
-                <Text style={styles.cancelButtonText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  styles.confirmButton,
-                  (!selectedPlaylistId || loading) && styles.disabledButton,
-                ]}
-                onPress={handleAddToPlaylist}
-                disabled={!selectedPlaylistId || loading}
-              >
-                <Text
-                  style={[
-                    styles.confirmButtonText,
-                    (!selectedPlaylistId || loading) &&
-                      styles.disabledButtonText,
-                  ]}
-                >
-                  {loading ? '추가 중...' : '추가'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>플레이리스트에 추가</Text>
+          <TouchableOpacity
+            onPress={closePlaylistModal}
+            style={styles.modalCloseButton}
+          >
+            <Ionicons name="close" size={24} color="#aaa" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+        <View style={styles.modalContent}>
+          {listLoading ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                플레이리스트를 불러오는 중...
+              </Text>
+            </View>
+          ) : playlists.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                사용 가능한 플레이리스트가 없습니다.
+              </Text>
+              <Text style={styles.emptySubText}>
+                먼저 플레이리스트를 생성해주세요.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={playlists}
+              keyExtractor={playlist => playlist.playlistId.toString()}
+              renderItem={renderPlaylistItem}
+              style={styles.playlistList}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
+
+        <View style={styles.modalFooter}>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.cancelButton]}
+            onPress={closePlaylistModal}
+            disabled={listLoading}
+          >
+            <Text style={styles.cancelButtonText}>취소</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.modalButton,
+              styles.confirmButton,
+              (!selectedPlaylistId || listLoading) && styles.disabledButton,
+            ]}
+            onPress={handleAddToPlaylist}
+            disabled={!selectedPlaylistId || listLoading}
+          >
+            <Text
+              style={[
+                styles.confirmButtonText,
+                (!selectedPlaylistId || listLoading) &&
+                  styles.disabledButtonText,
+              ]}
+            >
+              추가
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </BaseModal>
     </View>
   );
 };

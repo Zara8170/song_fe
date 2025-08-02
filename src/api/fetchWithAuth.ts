@@ -24,10 +24,32 @@ export const fetchWithAuth = async (
       const newToken = await refreshAccessToken(token);
       headers.set('Authorization', `Bearer ${newToken}`);
 
-      return await fetch(`${API_BASE_URL}${url}`, {
+      const retryResponse = await fetch(`${API_BASE_URL}${url}`, {
         ...options,
         headers,
       });
+
+      if (!retryResponse.ok) {
+        // 에러 응답의 본문을 미리 읽어서 에러 객체에 포함
+        const errorResponse = retryResponse.clone();
+        let errorData;
+        try {
+          errorData = await errorResponse.json();
+        } catch (jsonError) {
+          try {
+            errorData = await errorResponse.text();
+          } catch (textError) {
+            errorData = null;
+          }
+        }
+
+        const error = new Error(`API request failed: ${retryResponse.status}`);
+        (error as any).response = retryResponse.clone();
+        (error as any).responseData = errorData;
+        throw error;
+      }
+
+      return retryResponse;
     } catch (error) {
       await clearTokens();
       throw error;
@@ -35,7 +57,23 @@ export const fetchWithAuth = async (
   }
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    // 에러 응답의 본문을 미리 읽어서 에러 객체에 포함
+    const errorResponse = response.clone();
+    let errorData;
+    try {
+      errorData = await errorResponse.json();
+    } catch (jsonError) {
+      try {
+        errorData = await errorResponse.text();
+      } catch (textError) {
+        errorData = null;
+      }
+    }
+
+    const error = new Error(`API request failed: ${response.status}`);
+    (error as any).response = response.clone();
+    (error as any).responseData = errorData;
+    throw error;
   }
 
   return response;
