@@ -65,8 +65,6 @@ export interface PagedResponse<T> {
   current: number;
 }
 
-// 1. 플레이리스트 CRUD
-
 /**
  * 플레이리스트 생성
  */
@@ -118,8 +116,6 @@ export async function deletePlaylist(playlistId: number): Promise<void> {
     method: 'DELETE',
   });
 }
-
-// 2. 플레이리스트 목록 조회
 
 /**
  * 내 플레이리스트 목록 조회
@@ -177,8 +173,6 @@ export async function searchPlaylists(title: string): Promise<Playlist[]> {
   });
 }
 
-// 3. 플레이리스트 곡 관리
-
 /**
  * 플레이리스트에 곡 추가
  */
@@ -233,8 +227,6 @@ export async function updateSongOrder(
     },
   );
 }
-
-// 유틸리티 함수
 
 /**
  * "좋아요 표시한 음악" 플레이리스트 생성 또는 조회

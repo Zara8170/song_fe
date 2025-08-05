@@ -320,6 +320,7 @@ const SongListItem: React.FC<SongListItemProps> = ({
         animationType="slide"
         overlayStyle={styles.modalOverlay}
         containerStyle={styles.modalContainer}
+        disableScrollView={true}
       >
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>플레이리스트에 추가</Text>

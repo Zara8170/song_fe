@@ -14,13 +14,15 @@ export interface LoginResponseDTO {
   email: string;
   nickname: string;
   accessToken: string;
-  // refreshToken은 서버에서 DB로 관리하므로 프론트에서는 제외
 }
+
+console.log('API_BASE_URL:', API_BASE_URL);
 
 export const loginWithGoogle = async (
   idToken: string,
 ): Promise<LoginResponseDTO> => {
   try {
+    console.log('로그인 요청 주소:', `${API_BASE_URL}/api/auth/google`);
     const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
       method: 'POST',
       headers: {
