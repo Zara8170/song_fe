@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   ActivityIndicator,
-  ScrollView,
   TouchableOpacity,
   Dimensions,
   RefreshControl,
@@ -154,6 +153,7 @@ const RecommandScreen = () => {
         contentContainerStyle={styles.themeSongList}
         snapToInterval={screenWidth * 0.7 + 12}
         decelerationRate="fast"
+        nestedScrollEnabled={true}
       />
     </View>
   );
@@ -181,9 +181,51 @@ const RecommandScreen = () => {
     );
   }
 
+  // 전체 컨텐츠를 하나의 배열로 구성
+  const contentData = [
+    { type: 'quickPick', data: chunkArray(recommendations.candidates, 4) },
+    ...recommendations.groups.map((group, index) => ({
+      type: 'themeGroup',
+      data: group,
+      index,
+    })),
+  ];
+
+  const renderContent = ({ item }: { item: any }) => {
+    if (item.type === 'quickPick') {
+      return (
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>빠른 선곡</Text>
+          <FlatList
+            ref={quickPickListRef}
+            data={item.data}
+            renderItem={renderQuickPickPage}
+            keyExtractor={(pageItem, idx) => `quick-pick-page-${idx}`}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickPickList}
+            snapToInterval={screenWidth * 0.85}
+            decelerationRate="fast"
+            nestedScrollEnabled={true}
+          />
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>테마별 선곡</Text>
+          {renderThemeGroup(item.data, item.index)}
+        </View>
+      );
+    }
+  };
+
   return (
-    <ScrollView
+    <FlatList
       style={styles.container}
+      data={contentData}
+      renderItem={renderContent}
+      keyExtractor={(item, index) => `content-${index}`}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -193,31 +235,8 @@ const RecommandScreen = () => {
           tintColor="#4FC3F7"
         />
       }
-    >
-      {/* 빠른 선곡 섹션 */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>빠른 선곡</Text>
-        <FlatList
-          ref={quickPickListRef}
-          data={chunkArray(recommendations.candidates, 4)}
-          renderItem={renderQuickPickPage}
-          keyExtractor={(item, idx) => `quick-pick-page-${idx}`}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.quickPickList}
-          snapToInterval={screenWidth * 0.85}
-          decelerationRate="fast"
-        />
-      </View>
-
-      {/* 테마별 선곡 섹션 */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>테마별 선곡</Text>
-        {recommendations.groups.map((group, index) =>
-          renderThemeGroup(group, index),
-        )}
-      </View>
-    </ScrollView>
+      contentContainerStyle={{ paddingBottom: 20 }}
+    />
   );
 };
 

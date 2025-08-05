@@ -91,7 +91,7 @@ export default StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 80,
     right: 20,
     width: 56,
     height: 56,
@@ -117,18 +117,18 @@ export default StyleSheet.create({
     borderRadius: 12,
     width: '100%',
     maxWidth: 400,
-    maxHeight: '80%',
+    maxHeight: '60%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#3a4147',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
   },
@@ -136,54 +136,38 @@ export default StyleSheet.create({
     padding: 4,
   },
   modalContent: {
-    padding: 20,
+    padding: 16,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   textInput: {
     backgroundColor: '#3a4147',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    padding: 10,
+    fontSize: 14,
     color: '#fff',
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  switchGroup: {
-    marginBottom: 20,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  switchLabel: {
-    fontSize: 16,
-    color: '#aaa',
-  },
+
   modalFooter: {
     flexDirection: 'row',
-    padding: 20,
+    padding: 12,
     borderTopWidth: 1,
     borderTopColor: '#3a4147',
-    gap: 12,
+    gap: 8,
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 8,
+    borderRadius: 6,
     alignItems: 'center',
   },
   cancelButton: {
@@ -194,12 +178,12 @@ export default StyleSheet.create({
   },
   cancelButtonText: {
     color: '#aaa',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
   },
   confirmButtonText: {
     color: '#23292e',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
   },
   playlistActions: {
@@ -223,7 +207,7 @@ export default StyleSheet.create({
     backgroundColor: '#2a3138',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingBottom: 40,
+    paddingBottom: 5,
   },
   actionSheetHeader: {
     padding: 20,
@@ -249,7 +233,7 @@ export default StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     gap: 12,
-    marginBottom: 8,
+    marginBottom: 0,
   },
 
   actionSheetDeleteText: {

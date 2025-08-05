@@ -11,6 +11,8 @@ export const fetchWithAuth = async (
     throw new Error('No access token found');
   }
 
+  console.log('API_BASE_URL:', API_BASE_URL);
+
   const headers = new Headers(options.headers);
   headers.set('Authorization', `Bearer ${token}`);
 

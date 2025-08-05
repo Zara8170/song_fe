@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  BackHandler,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useFavorites } from '../hooks/FavoritesContext';
@@ -32,12 +34,10 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface LibraryScreenProps {
-  navigation?: any;
+  navigation: any;
 }
 
-const LibraryScreen: React.FC<LibraryScreenProps> = ({
-  navigation: _navigation,
-}) => {
+const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
   const { favorites, syncWithBackend, removeFavorite } = useFavorites();
   const [refreshing, setRefreshing] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -49,7 +49,6 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPlaylistTitle, setNewPlaylistTitle] = useState('');
   const [newPlaylistDescription, setNewPlaylistDescription] = useState('');
-  const [newPlaylistIsPublic, setNewPlaylistIsPublic] = useState(false);
   const [creating, setCreating] = useState(false);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedPlaylistForAction, setSelectedPlaylistForAction] =
@@ -141,17 +140,54 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
     showToast,
   ]);
 
-  const goBackToPlaylists = () => {
+  const goBackToPlaylists = useCallback(() => {
     setSelectedPlaylist(null);
     setPlaylistSongs([]);
     setLoading(true);
     loadPlaylists();
-  };
+  }, [loadPlaylists]);
+
+  // 뒤로가기 버튼 처리
+  const handleBackPress = useCallback(() => {
+    if (selectedPlaylist) {
+      goBackToPlaylists();
+      return true; // 이벤트 소비 (기본 뒤로가기 동작 방지)
+    }
+    return false; // 기본 뒤로가기 동작 허용
+  }, [selectedPlaylist, goBackToPlaylists]);
+
+  // 네비게이션 beforeRemove 이벤트 처리
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (!selectedPlaylist) {
+        // 플레이리스트 목록 화면에서는 정상적으로 뒤로가기 허용
+        return;
+      }
+
+      // 플레이리스트 상세 화면에서는 뒤로가기 방지하고 플레이리스트 목록으로 이동
+      e.preventDefault();
+      goBackToPlaylists();
+    });
+
+    return unsubscribe;
+  }, [navigation, selectedPlaylist, goBackToPlaylists]);
+
+  // 안드로이드 하드웨어 뒤로가기 버튼 처리
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'android') {
+        const subscription = BackHandler.addEventListener(
+          'hardwareBackPress',
+          handleBackPress,
+        );
+        return () => subscription.remove();
+      }
+    }, [handleBackPress]),
+  );
 
   const openCreateModal = () => {
     setNewPlaylistTitle('');
     setNewPlaylistDescription('');
-    setNewPlaylistIsPublic(false);
     setShowCreateModal(true);
   };
 
@@ -159,7 +195,6 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
     setShowCreateModal(false);
     setNewPlaylistTitle('');
     setNewPlaylistDescription('');
-    setNewPlaylistIsPublic(false);
   };
 
   const handleCreatePlaylist = async () => {
@@ -178,7 +213,7 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
       const playlistData: PlaylistCreateDTO = {
         title: newPlaylistTitle.trim(),
         description: newPlaylistDescription.trim() || undefined,
-        isPublic: newPlaylistIsPublic,
+        isPublic: false, // 기본값으로 비공개 설정
       };
 
       await createPlaylist(playlistData);
@@ -409,8 +444,6 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({
           onTitleChange={setNewPlaylistTitle}
           description={newPlaylistDescription}
           onDescriptionChange={setNewPlaylistDescription}
-          isPublic={newPlaylistIsPublic}
-          onPublicChange={setNewPlaylistIsPublic}
           creating={creating}
         />
 
