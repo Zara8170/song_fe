@@ -228,31 +228,52 @@ export async function updateSongOrder(
   );
 }
 
+// 중복 생성 방지를 위한 Promise 캐시
+let likedSongsPlaylistPromise: Promise<Playlist> | null = null;
+
 /**
  * "좋아요 표시한 음악" 플레이리스트 생성 또는 조회
+ * 중복 생성을 방지하기 위해 Promise 캐싱 사용
  */
 export async function getOrCreateLikedSongsPlaylist(): Promise<Playlist> {
-  try {
-    // 먼저 기존 플레이리스트 중 "좋아요 표시한 음악" 찾기
-    const playlists = await getMyPlaylists();
-    const likedSongsPlaylist = playlists.find(
-      playlist => playlist.title === '좋아요 표시한 음악',
-    );
-
-    if (likedSongsPlaylist) {
-      return likedSongsPlaylist;
+  // 이미 진행 중인 요청이 있으면 그것을 기다림
+  if (likedSongsPlaylistPromise) {
+    try {
+      return await likedSongsPlaylistPromise;
+    } catch (error) {
+      // 이전 요청이 실패했으면 캐시 초기화하고 다시 시도
+      likedSongsPlaylistPromise = null;
     }
-
-    // 없으면 새로 생성
-    return await createPlaylist({
-      title: '좋아요 표시한 음악',
-      description: '좋아요를 표시한 모든 노래들',
-      isPublic: false,
-    });
-  } catch (error) {
-    console.error('Failed to get or create liked songs playlist:', error);
-    throw error;
   }
+
+  // 새로운 요청 시작
+  likedSongsPlaylistPromise = (async () => {
+    try {
+      // 먼저 기존 플레이리스트 중 "좋아요 표시한 음악" 찾기
+      const playlists = await getMyPlaylists();
+      const likedSongsPlaylist = playlists.find(
+        playlist => playlist.title === '좋아요 표시한 음악',
+      );
+
+      if (likedSongsPlaylist) {
+        return likedSongsPlaylist;
+      }
+
+      // 없으면 새로 생성
+      return await createPlaylist({
+        title: '좋아요 표시한 음악',
+        description: '좋아요를 표시한 모든 노래들',
+        isPublic: false,
+      });
+    } catch (error) {
+      console.error('Failed to get or create liked songs playlist:', error);
+      // 실패하면 캐시 초기화
+      likedSongsPlaylistPromise = null;
+      throw error;
+    }
+  })();
+
+  return await likedSongsPlaylistPromise;
 }
 
 /**

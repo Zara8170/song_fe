@@ -90,6 +90,7 @@ const App = () => {
                     initialRouteName="Main"
                     screenOptions={{
                       headerShown: false,
+                      animation: 'none',
                     }}
                   >
                     <Stack.Screen

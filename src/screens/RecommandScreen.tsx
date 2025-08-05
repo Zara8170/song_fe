@@ -181,14 +181,9 @@ const RecommandScreen = () => {
     );
   }
 
-  // 전체 컨텐츠를 하나의 배열로 구성
   const contentData = [
     { type: 'quickPick', data: chunkArray(recommendations.candidates, 4) },
-    ...recommendations.groups.map((group, index) => ({
-      type: 'themeGroup',
-      data: group,
-      index,
-    })),
+    { type: 'themeSection', data: recommendations.groups },
   ];
 
   const renderContent = ({ item }: { item: any }) => {
@@ -210,14 +205,34 @@ const RecommandScreen = () => {
           />
         </View>
       );
-    } else {
+    } else if (item.type === 'themeSection') {
       return (
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>테마별 선곡</Text>
-          {renderThemeGroup(item.data, item.index)}
+          {item.data.map((group: RecommendationGroup, index: number) => (
+            <View key={index} style={styles.themeGroupContainer}>
+              <Text style={styles.themeGroupTitle}>{group.tagline}</Text>
+              <FlatList
+                ref={el => {
+                  themeListRefs.current[index] = el;
+                }}
+                data={group.songs}
+                renderItem={renderThemeGroupSong}
+                keyExtractor={(songItem, idx) => `${index}-${idx}`}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.themeSongList}
+                snapToInterval={screenWidth * 0.7 + 12}
+                decelerationRate="fast"
+                nestedScrollEnabled={true}
+              />
+            </View>
+          ))}
         </View>
       );
     }
+
+    return null;
   };
 
   return (

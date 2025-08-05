@@ -120,9 +120,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // 테마별 선곡 스타일
   themeGroupContainer: {
-    marginBottom: 30,
+    marginBottom: 40,
   },
   themeGroupTitle: {
     color: '#4FC3F7',
