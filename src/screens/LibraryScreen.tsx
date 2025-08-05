@@ -473,9 +473,14 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={goBackToPlaylists}>
-          <Ionicons name="chevron-back" size={24} color="#7ed6f7" />
-        </TouchableOpacity>
+        {selectedPlaylist.title !== '좋아요 표시한 음악' && (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={goBackToPlaylists}
+          >
+            <Ionicons name="chevron-back" size={20} color="#7ed6f7" />
+          </TouchableOpacity>
+        )}
         <Text style={styles.headerTitle}>{selectedPlaylist.title}</Text>
       </View>
       <FlatList
