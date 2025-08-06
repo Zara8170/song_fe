@@ -16,7 +16,7 @@ import { searchSongs, fetchSongs, Song } from '../api/song';
 import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SongListItem from '../components/SongListItem';
-import TopButton from '../components/TopButton';
+// import TopButton from '../components/TopButton';
 import SearchTypeDropdown, {
   SearchTargetType,
 } from '../components/SearchTypeDropdown';
@@ -50,7 +50,7 @@ const SearchScreen = () => {
   const [filter, setFilter] = useState<TabType>('ALL');
   const [searchPage, setSearchPage] = useState(1);
   const [searchHasMore, setSearchHasMore] = useState(true);
-  const [showTopButton, setShowTopButton] = useState(false);
+  // const [showTopButton, setShowTopButton] = useState(false);
   const [searchType, setSearchType] = useState<SearchTargetType>('ALL');
   const [showSearchTypeDropdown, setShowSearchTypeDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
@@ -228,14 +228,14 @@ const SearchScreen = () => {
     }
   };
 
-  const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    setShowTopButton(offsetY > 100);
-  };
+  // const handleScroll = (event: any) => {
+  //   const offsetY = event.nativeEvent.contentOffset.y;
+  //   setShowTopButton(offsetY > 100);
+  // };
 
-  const handlePressTop = () => {
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  };
+  // const handlePressTop = () => {
+  //   flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  // };
 
   const handleSearchTypePress = () => {
     setDropdownPosition({ x: 12, y: 65 });
@@ -360,8 +360,8 @@ const SearchScreen = () => {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.1}
         onContentSizeChange={handleContentSizeChange}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
+        // onScroll={handleScroll}
+        // scrollEventThrottle={16}
         ListFooterComponent={
           loading ? (
             <View style={styles.loadingContainer}>
@@ -383,7 +383,7 @@ const SearchScreen = () => {
         )}
 
       {/* 맨 위로 버튼 */}
-      <TopButton visible={showTopButton} onPress={handlePressTop} />
+      {/* <TopButton visible={showTopButton} onPress={handlePressTop} /> */}
 
       {/* 검색 타입 선택 드롭다운 */}
       <SearchTypeDropdown
