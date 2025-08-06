@@ -17,6 +17,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SongListItem from '../components/SongListItem';
 import TopButton from '../components/TopButton';
+import SearchTypeDropdown, {
+  SearchTargetType,
+} from '../components/SearchTypeDropdown';
 import styles from './SearchScreen.styles';
 import { useToast } from '../contexts/ToastContext';
 
@@ -28,6 +31,12 @@ const TAB_LABELS: Record<TabType, string> = {
   ALL: 'TJ/KY',
   TJ: 'TJ',
   KY: 'KY',
+};
+
+const SEARCH_TYPE_LABELS: Record<SearchTargetType, string> = {
+  ALL: '통합',
+  TITLE: '제목',
+  ARTIST: '가수',
 };
 
 const SearchScreen = () => {
@@ -42,6 +51,9 @@ const SearchScreen = () => {
   const [searchPage, setSearchPage] = useState(1);
   const [searchHasMore, setSearchHasMore] = useState(true);
   const [showTopButton, setShowTopButton] = useState(false);
+  const [searchType, setSearchType] = useState<SearchTargetType>('ALL');
+  const [showSearchTypeDropdown, setShowSearchTypeDropdown] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
   const flatListRef = useRef<FlatList>(null);
   const tabAnim = useRef(new Animated.Value(0)).current;
@@ -96,7 +108,7 @@ const SearchScreen = () => {
           searchValue,
           reset ? 1 : searchPage,
           PAGE_SIZE,
-          'ALL',
+          searchType,
         );
         setSearchResults(prev =>
           reset ? data.dtoList : [...prev, ...data.dtoList],
@@ -112,7 +124,7 @@ const SearchScreen = () => {
         setLoading(false);
       }
     },
-    [query, searchPage, showToast],
+    [query, searchPage, searchType, showToast],
   );
 
   const handleRealtimeSearch = useCallback(
@@ -167,6 +179,17 @@ const SearchScreen = () => {
   }, [query, handleRealtimeSearch]);
 
   useEffect(() => {
+    if (query.trim() && hasSearched) {
+      setSearchResults([]);
+      setSearchPage(1);
+      setSearchHasMore(true);
+      prevQueryRef.current = '';
+      handleSearch(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchType]);
+
+  useEffect(() => {
     loadAllSongs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -214,6 +237,11 @@ const SearchScreen = () => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
+  const handleSearchTypePress = () => {
+    setDropdownPosition({ x: 12, y: 65 });
+    setShowSearchTypeDropdown(true);
+  };
+
   const currentData = hasSearched && query.trim() ? searchResults : allSongs;
 
   const filteredData = Array.isArray(currentData)
@@ -239,10 +267,32 @@ const SearchScreen = () => {
 
       {/* 검색바 */}
       <View style={styles.searchBoxWrapper}>
-        <View style={styles.searchBoxInner}>
+        <View style={styles.searchContainer}>
+          {/* 검색 타입 선택 버튼 */}
+          <TouchableOpacity
+            style={styles.searchTypeButton}
+            onPress={handleSearchTypePress}
+          >
+            <Text style={styles.searchTypeText}>
+              {SEARCH_TYPE_LABELS[searchType]}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color="#7ed6f7"
+              style={styles.chevronIcon}
+            />
+          </TouchableOpacity>
+
           <TextInput
             style={styles.searchInput}
-            placeholder="곡명, 가수로 검색하세요"
+            placeholder={
+              searchType === 'ALL'
+                ? '곡명, 가수로 검색하세요'
+                : searchType === 'TITLE'
+                ? '곡명으로 검색하세요'
+                : '가수명으로 검색하세요'
+            }
             placeholderTextColor="#aaa"
             value={query}
             onChangeText={text => {
@@ -266,31 +316,6 @@ const SearchScreen = () => {
             }}
             returnKeyType="search"
           />
-          <View style={styles.searchIconWrapper}>
-            <View style={styles.searchIconBg}>
-              <Ionicons
-                name="search"
-                size={22}
-                color="#23292e"
-                onPress={() => {
-                  Keyboard.dismiss();
-                  const trimmedQuery = query.trim();
-                  const hasKorean = (text: string) => {
-                    const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
-                    return koreanRegex.test(text);
-                  };
-
-                  const shouldSearch = hasKorean(trimmedQuery)
-                    ? trimmedQuery.length >= 1
-                    : trimmedQuery.length >= 2;
-
-                  if (shouldSearch) {
-                    handleSearch();
-                  }
-                }}
-              />
-            </View>
-          </View>
         </View>
       </View>
 
@@ -359,6 +384,15 @@ const SearchScreen = () => {
 
       {/* 맨 위로 버튼 */}
       <TopButton visible={showTopButton} onPress={handlePressTop} />
+
+      {/* 검색 타입 선택 드롭다운 */}
+      <SearchTypeDropdown
+        visible={showSearchTypeDropdown}
+        onClose={() => setShowSearchTypeDropdown(false)}
+        currentType={searchType}
+        onSelect={type => setSearchType(type)}
+        position={dropdownPosition}
+      />
     </SafeAreaView>
   );
 };

@@ -10,39 +10,46 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 16,
   },
-  searchBoxInner: {
-    position: 'relative',
-    width: '100%',
-  },
-  searchInput: {
-    width: '100%',
+
+  searchContainer: {
+    flexDirection: 'row',
     backgroundColor: '#363c44',
     borderRadius: 12,
     height: 48,
+    overflow: 'hidden',
+  },
+  searchTypeButton: {
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    backgroundColor: '#2d3436',
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    minWidth: 80,
+  },
+  searchTypeText: {
+    color: '#7ed6f7',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  searchInput: {
+    flex: 1,
     color: '#fff',
     paddingHorizontal: 16,
     fontSize: 16,
     fontWeight: 'bold',
-    paddingRight: 48,
+    backgroundColor: '#363c44',
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
   },
-  searchIconWrapper: {
-    position: 'absolute',
-    right: 8,
-    top: 6,
-    height: 36,
-    width: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
+  searchInputWithType: {
+    paddingLeft: 16,
   },
-  searchIconBg: {
-    backgroundColor: '#7ed6f7',
-    borderRadius: 18,
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
+  chevronIcon: {
+    marginLeft: 4,
   },
-  // MainScreen에서 가져온 탭바 스타일들
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'center',
