@@ -78,11 +78,35 @@ export const logout = async () => {
     throw error;
   }
 };
-
 export const getAuthToken = async (): Promise<string | null> => {
   return await getAccessToken();
 };
 
 export const getCurrentMemberId = async (): Promise<number | null> => {
   return await getMemberId();
+};
+
+export const deleteMember = async () => {
+  try {
+    const token = await getAccessToken();
+    if (!token) {
+      throw new Error('토큰이 없습니다.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/member`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('회원 탈퇴 실패');
+    }
+
+    return await response.text();
+  } catch (error) {
+    console.error('회원 탈퇴 에러:', error);
+    throw error;
+  }
 };

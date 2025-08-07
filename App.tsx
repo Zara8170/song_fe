@@ -10,9 +10,11 @@ import LibraryScreen from './src/screens/LibraryScreen';
 import RecommandScreen from './src/screens/RecommandScreen';
 import Top100Screen from './src/screens/Top100Screen';
 import NewSongScreen from './src/screens/NewSongScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import { FavoritesProvider } from './src/hooks/FavoritesContext';
 import { ToastProvider } from './src/contexts/ToastContext';
+import { AuthProvider } from './src/contexts/AuthContext';
 import { refreshAccessToken } from './src/api/auth';
 import { getAccessToken } from './src/utils/tokenStorage';
 
@@ -21,6 +23,10 @@ const Stack = createStackNavigator();
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const handleLogout = async () => {
+    setLoggedIn(false);
+  };
 
   const checkLoginStatus = async () => {
     try {
@@ -83,102 +89,111 @@ const App = () => {
           {!loggedIn ? (
             <LoginScreen onLoginSuccess={() => setLoggedIn(true)} />
           ) : (
-            <FavoritesProvider>
-              <View style={{ flex: 1, backgroundColor: '#23292e' }}>
-                <NavigationContainer>
-                  <Stack.Navigator
-                    initialRouteName="Main"
-                    screenOptions={{
-                      headerShown: false,
-                      animation: 'none',
-                    }}
-                  >
-                    <Stack.Screen
-                      name="Main"
-                      component={MainScreen}
-                      options={{
+            <AuthProvider logout={handleLogout}>
+              <FavoritesProvider>
+                <View style={{ flex: 1, backgroundColor: '#23292e' }}>
+                  <NavigationContainer>
+                    <Stack.Navigator
+                      initialRouteName="Main"
+                      screenOptions={{
                         headerShown: false,
+                        animation: 'none',
                       }}
-                    />
-                    <Stack.Screen
-                      name="SearchTab"
-                      component={SearchScreen}
-                      options={{
-                        headerShown: true,
-                        headerTitle: '노래검색',
-                        headerStyle: {
-                          backgroundColor: '#23292e',
-                        },
-                        headerTintColor: '#fff',
-                        headerTitleStyle: {
-                          fontWeight: 'bold',
-                        },
-                      }}
-                    />
-                    <Stack.Screen
-                      name="LibraryTab"
-                      component={LibraryScreen}
-                      options={{
-                        headerShown: true,
-                        headerTitle: '보관함',
-                        headerStyle: {
-                          backgroundColor: '#23292e',
-                        },
-                        headerTintColor: '#fff',
-                        headerTitleStyle: {
-                          fontWeight: 'bold',
-                        },
-                      }}
-                    />
-                    <Stack.Screen
-                      name="RecommandTab"
-                      component={RecommandScreen}
-                      options={{
-                        headerShown: true,
-                        headerTitle: '노래 추천',
-                        headerStyle: {
-                          backgroundColor: '#23292e',
-                        },
-                        headerTintColor: '#fff',
-                        headerTitleStyle: {
-                          fontWeight: 'bold',
-                        },
-                      }}
-                    />
-                    <Stack.Screen
-                      name="Top100"
-                      component={Top100Screen}
-                      options={{
-                        headerShown: true,
-                        headerTitle: 'Top 100',
-                        headerStyle: {
-                          backgroundColor: '#23292e',
-                        },
-                        headerTintColor: '#fff',
-                        headerTitleStyle: {
-                          fontWeight: 'bold',
-                        },
-                      }}
-                    />
-                    <Stack.Screen
-                      name="NewSong"
-                      component={NewSongScreen}
-                      options={{
-                        headerShown: true,
-                        headerTitle: '신곡',
-                        headerStyle: {
-                          backgroundColor: '#23292e',
-                        },
-                        headerTintColor: '#fff',
-                        headerTitleStyle: {
-                          fontWeight: 'bold',
-                        },
-                      }}
-                    />
-                  </Stack.Navigator>
-                </NavigationContainer>
-              </View>
-            </FavoritesProvider>
+                    >
+                      <Stack.Screen
+                        name="Main"
+                        component={MainScreen}
+                        options={{
+                          headerShown: false,
+                        }}
+                      />
+                      <Stack.Screen
+                        name="SearchTab"
+                        component={SearchScreen}
+                        options={{
+                          headerShown: true,
+                          headerTitle: '노래검색',
+                          headerStyle: {
+                            backgroundColor: '#23292e',
+                          },
+                          headerTintColor: '#fff',
+                          headerTitleStyle: {
+                            fontWeight: 'bold',
+                          },
+                        }}
+                      />
+                      <Stack.Screen
+                        name="LibraryTab"
+                        component={LibraryScreen}
+                        options={{
+                          headerShown: true,
+                          headerTitle: '보관함',
+                          headerStyle: {
+                            backgroundColor: '#23292e',
+                          },
+                          headerTintColor: '#fff',
+                          headerTitleStyle: {
+                            fontWeight: 'bold',
+                          },
+                        }}
+                      />
+                      <Stack.Screen
+                        name="RecommandTab"
+                        component={RecommandScreen}
+                        options={{
+                          headerShown: true,
+                          headerTitle: '노래 추천',
+                          headerStyle: {
+                            backgroundColor: '#23292e',
+                          },
+                          headerTintColor: '#fff',
+                          headerTitleStyle: {
+                            fontWeight: 'bold',
+                          },
+                        }}
+                      />
+                      <Stack.Screen
+                        name="Top100"
+                        component={Top100Screen}
+                        options={{
+                          headerShown: true,
+                          headerTitle: 'Top 100',
+                          headerStyle: {
+                            backgroundColor: '#23292e',
+                          },
+                          headerTintColor: '#fff',
+                          headerTitleStyle: {
+                            fontWeight: 'bold',
+                          },
+                        }}
+                      />
+                      <Stack.Screen
+                        name="NewSong"
+                        component={NewSongScreen}
+                        options={{
+                          headerShown: true,
+                          headerTitle: '신곡',
+                          headerStyle: {
+                            backgroundColor: '#23292e',
+                          },
+                          headerTintColor: '#fff',
+                          headerTitleStyle: {
+                            fontWeight: 'bold',
+                          },
+                        }}
+                      />
+                      <Stack.Screen
+                        name="Settings"
+                        component={SettingsScreen}
+                        options={{
+                          headerShown: false,
+                        }}
+                      />
+                    </Stack.Navigator>
+                  </NavigationContainer>
+                </View>
+              </FavoritesProvider>
+            </AuthProvider>
           )}
         </ToastProvider>
       </GestureHandlerRootView>
