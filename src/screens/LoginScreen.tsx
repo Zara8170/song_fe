@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { loginWithGoogle } from '../api/auth';
@@ -75,13 +75,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       />
       {/* 앱 아이콘 */}
       <View style={styles.iconContainer}>
-        <View style={styles.iconPlaceholder}>
-          <Text style={styles.iconText}>♪</Text>
-        </View>
+        <Image
+          source={require('../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png')}
+          style={styles.iconImage}
+        />
       </View>
 
       {/* 앱 타이틀 */}
-      <Text style={styles.appTitle}>KaraSong</Text>
+      <Text style={styles.appTitle}>UtaBox</Text>
       <Text style={styles.appSubtitle}>당신의 음악 여정을 시작하세요</Text>
 
       {/* 구글 로그인 버튼 */}

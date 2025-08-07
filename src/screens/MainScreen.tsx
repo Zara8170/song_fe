@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './MainScreen.styles';
@@ -72,7 +73,21 @@ const MainScreen = ({ navigation }: MainScreenProps) => {
           },
         ]}
       >
-        <Text style={styles.appTitle}>KaraSong</Text>
+        <View style={styles.titleContainer}>
+          <View style={styles.leftContainer}>
+            <Image
+              source={require('../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png')}
+              style={styles.appIcon}
+            />
+            <Text style={styles.appTitle}>UtaBox</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Ionicons name="menu" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.menuContainer}>
         <Text style={styles.welcomeTitle}>환영합니다!</Text>

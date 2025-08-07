@@ -34,11 +34,32 @@ export const styles = StyleSheet.create({
     paddingLeft: 18,
     alignItems: 'flex-start',
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingRight: 18,
+  },
+  leftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    padding: 10,
+  },
+  appIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+    marginLeft: 10,
+  },
   appTitle: {
     color: '#fff',
     fontSize: 22,
     fontWeight: 'bold',
     letterSpacing: 1,
+    paddingLeft: 10,
   },
   menuContainer: {
     flex: 1,

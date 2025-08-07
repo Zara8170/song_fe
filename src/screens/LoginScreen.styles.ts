@@ -11,21 +11,10 @@ export const styles = StyleSheet.create({
   iconContainer: {
     marginBottom: 24,
   },
-  iconPlaceholder: {
+  iconImage: {
     width: 120,
     height: 120,
-    borderRadius: 60,
-    backgroundColor: '#4F46E5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    resizeMode: 'contain',
   },
   iconText: {
     fontSize: 48,
