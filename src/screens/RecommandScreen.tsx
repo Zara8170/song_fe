@@ -9,11 +9,13 @@ import {
   RefreshControl,
 } from 'react-native';
 import {
-  requestRecommendation,
   RecommendationResponse,
   RecommendationCandidate,
   RecommendationGroup,
   RecommendationSong,
+  createRecommendationJob,
+  getRecommendationJobStatus,
+  fetchLatestRecommendation,
 } from '../api/song';
 import styles from './RecommandScreenStyles';
 import { useFavorites } from '../hooks/FavoritesContext';
@@ -31,13 +33,15 @@ const RecommandScreen = () => {
 
   const quickPickListRef = useRef<FlatList>(null);
   const themeListRefs = useRef<{ [key: number]: FlatList | null }>({});
+  const isActiveRef = useRef<boolean>(true);
 
-  const loadRecommendations = useCallback(
-    async (isRefresh = false) => {
+  const startRecommendationJobAndPoll = useCallback(
+    async (options?: { isRefresh?: boolean; keepSpinner?: boolean }) => {
+      const { isRefresh = false, keepSpinner = false } = options || {};
       try {
         if (isRefresh) {
           setIsRefreshing(true);
-        } else {
+        } else if (keepSpinner) {
           setIsLoading(true);
         }
 
@@ -45,19 +49,55 @@ const RecommandScreen = () => {
           .map(song => song.songId)
           .filter(id => !Number.isNaN(id));
 
-        const data = await requestRecommendation(favoriteIds);
-        setRecommendations(data);
+        const job = await createRecommendationJob(favoriteIds, {
+          source: isRefresh ? 'manual' : 'manual',
+          strategy: 'default',
+        });
+
+        let attempts = 0;
+        const maxAttempts = 30; // ~1분(2s 간격)
+        const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+        while (attempts < maxAttempts) {
+          if (!isActiveRef.current) {
+            return;
+          }
+          attempts += 1;
+          const status = await getRecommendationJobStatus(job.jobId);
+
+          if (status.status === 'succeeded' && status.result) {
+            if (!isActiveRef.current) return;
+            setRecommendations(status.result);
+            if (!isRefresh) setIsLoading(false);
+            setIsRefreshing(false);
+            return;
+          }
+          if (status.status === 'failed') {
+            if (!isActiveRef.current) return;
+            if (!isRefresh) setIsLoading(false);
+            setIsRefreshing(false);
+            showToast(
+              '추천 생성을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.',
+            );
+            return;
+          }
+
+          await delay(2000);
+        }
+
+        // 타임아웃
+        if (!isActiveRef.current) return;
+        if (!isRefresh) setIsLoading(false);
+        setIsRefreshing(false);
+        showToast('추천 생성이 지연되고 있습니다. 잠시 후 다시 시도해주세요.');
       } catch (error: any) {
+        if (!isActiveRef.current) return;
+        if (!isRefresh) setIsLoading(false);
+        setIsRefreshing(false);
         if (error.message?.includes('사용자 정보를 찾을 수 없습니다')) {
           showToast('사용자 정보가 없습니다. 다시 로그인해주세요.');
         } else {
           showToast('추천을 가져오는 데 실패했습니다.');
-        }
-      } finally {
-        if (isRefresh) {
-          setIsRefreshing(false);
-        } else {
-          setIsLoading(false);
         }
       }
     },
@@ -65,7 +105,7 @@ const RecommandScreen = () => {
   );
 
   const onRefresh = useCallback(() => {
-    loadRecommendations(true);
+    startRecommendationJobAndPoll({ isRefresh: true, keepSpinner: false });
 
     setTimeout(() => {
       quickPickListRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -76,11 +116,44 @@ const RecommandScreen = () => {
         }
       });
     }, 100);
-  }, [loadRecommendations]);
+  }, [startRecommendationJobAndPoll]);
 
   useEffect(() => {
-    loadRecommendations(false);
-  }, [loadRecommendations]);
+    isActiveRef.current = true;
+    const bootstrap = async () => {
+      setIsLoading(true);
+      try {
+        const latest = await fetchLatestRecommendation();
+        if (!isActiveRef.current) return;
+        if (latest) {
+          setRecommendations(latest);
+          setIsLoading(false);
+          // 최신 표시 후 백그라운드 갱신
+          startRecommendationJobAndPoll({
+            isRefresh: false,
+            keepSpinner: false,
+          });
+        } else {
+          // 최신 결과가 없으면 스피너 유지하며 생성 + 폴링
+          await startRecommendationJobAndPoll({
+            isRefresh: false,
+            keepSpinner: true,
+          });
+        }
+      } catch (_e) {
+        if (!isActiveRef.current) return;
+        // 최신 불러오기 실패 시 바로 생성 + 폴링으로 폴백
+        await startRecommendationJobAndPoll({
+          isRefresh: false,
+          keepSpinner: true,
+        });
+      }
+    };
+    bootstrap();
+    return () => {
+      isActiveRef.current = false;
+    };
+  }, [startRecommendationJobAndPoll]);
 
   const renderQuickPickPage = ({
     item,
@@ -138,25 +211,7 @@ const RecommandScreen = () => {
     return chunks;
   };
 
-  const renderThemeGroup = (group: RecommendationGroup, index: number) => (
-    <View key={index} style={styles.themeGroupContainer}>
-      <Text style={styles.themeGroupTitle}>{group.tagline}</Text>
-      <FlatList
-        ref={el => {
-          themeListRefs.current[index] = el;
-        }}
-        data={group.songs}
-        renderItem={renderThemeGroupSong}
-        keyExtractor={(item, idx) => `${index}-${idx}`}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.themeSongList}
-        snapToInterval={screenWidth * 0.7 + 12}
-        decelerationRate="fast"
-        nestedScrollEnabled={true}
-      />
-    </View>
-  );
+  // removed unused renderThemeGroup helper
 
   if (isLoading) {
     return (
@@ -173,7 +228,12 @@ const RecommandScreen = () => {
         <Text style={styles.errorText}>추천을 불러오지 못했습니다.</Text>
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={() => loadRecommendations(false)}
+          onPress={() =>
+            startRecommendationJobAndPoll({
+              isRefresh: false,
+              keepSpinner: true,
+            })
+          }
         >
           <Text style={styles.retryButtonText}>다시 시도</Text>
         </TouchableOpacity>

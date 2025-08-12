@@ -50,6 +50,11 @@ const styles = StyleSheet.create({
   chevronIcon: {
     marginLeft: 4,
   },
+  clearButton: {
+    width: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'center',

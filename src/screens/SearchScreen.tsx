@@ -316,6 +316,27 @@ const SearchScreen = () => {
             }}
             returnKeyType="search"
           />
+          {query.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={() => {
+                if (debounceTimeoutRef.current) {
+                  clearTimeout(debounceTimeoutRef.current);
+                }
+                setQuery('');
+                setHasSearched(false);
+                setSearchResults([]);
+                setSearchPage(1);
+                setSearchHasMore(true);
+                prevQueryRef.current = '';
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="검색어 삭제"
+              accessibilityRole="button"
+            >
+              <Ionicons name="close-circle" size={20} color="#aaa" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
