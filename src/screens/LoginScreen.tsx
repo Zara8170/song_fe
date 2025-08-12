@@ -6,7 +6,7 @@ import { loginWithGoogle } from '../api/auth';
 import { useToast } from '../contexts/ToastContext';
 import { GOOGLE_WEB_CLIENT_ID } from '@env';
 import { styles } from './LoginScreen.styles';
-import { requestRecommendation } from '../api/song';
+import { createRecommendationJob } from '../api/song';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -26,9 +26,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   }, []);
 
   const startRecommendationInBackground = () => {
-    requestRecommendation([]).catch(error => {
-      console.log('초기 추천 로직 실행 중 에러:', error);
-    });
+    createRecommendationJob([], { source: 'login', strategy: 'default' })
+      .then(() => {
+        // fire-and-forget: job is queued; UI does not wait
+      })
+      .catch(error => {
+        console.log('초기 추천 잡 생성 중 에러:', error);
+      });
   };
 
   const signIn = async () => {

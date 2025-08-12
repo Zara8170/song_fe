@@ -32,7 +32,8 @@ export const loginWithGoogle = async (
     });
 
     if (!response.ok) {
-      throw new Error('Login failed');
+      const text = await response.text();
+      throw new Error(`Login failed (${response.status}): ${text}`);
     }
 
     const loginResponse = await response.json();

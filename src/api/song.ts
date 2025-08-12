@@ -53,6 +53,31 @@ export interface RecommendationResponse {
   candidates: RecommendationCandidate[];
 }
 
+// New: Async job API types
+export type RecommendationJobStatusType =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'canceled';
+
+export interface RecommendationJobCreateResponse {
+  jobId: string;
+  status: RecommendationJobStatusType;
+  statusUrl?: string;
+}
+
+export interface RecommendationJobStatusResponse {
+  jobId: string;
+  status: RecommendationJobStatusType;
+  progress?: number;
+  submittedAt?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  result?: RecommendationResponse;
+  error?: { code: string; message: string; details?: Record<string, unknown> };
+}
+
 export async function fetchSongs(
   page: number,
   size: number,
@@ -86,6 +111,68 @@ export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(songIds),
   });
+  return res.json();
+}
+
+// New: Create recommendation job (202 Accepted expected)
+export async function createRecommendationJob(
+  favoriteSongIds: number[],
+  options?: {
+    strategy?: 'default' | 'fast' | 'deep';
+    top_k?: number;
+    locale?: 'ko' | 'ja' | 'en';
+    source?: 'login' | 'manual';
+  },
+): Promise<RecommendationJobCreateResponse> {
+  const body = {
+    favorite_song_ids: favoriteSongIds,
+    strategy: options?.strategy ?? 'default',
+    top_k: options?.top_k ?? 50,
+    locale: options?.locale,
+    source: options?.source ?? 'manual',
+  };
+
+  const res = await fetchWithAuth(`/api/recommendation/jobs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    // surface server-side error
+    const text = await res.text();
+    throw new Error(
+      `Failed to create recommendation job: ${res.status} ${text}`,
+    );
+  }
+
+  return res.json();
+}
+
+// New: Get recommendation job status (and result if succeeded)
+export async function getRecommendationJobStatus(
+  jobId: string,
+): Promise<RecommendationJobStatusResponse> {
+  const res = await fetchWithAuth(`/api/recommendation/jobs/${jobId}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to fetch job status: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+// New: Fetch latest recommendation for current member
+export async function fetchLatestRecommendation(): Promise<RecommendationResponse | null> {
+  const res = await fetchWithAuth(`/api/recommendation/latest`);
+  if (res.status === 204) {
+    return null;
+  }
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(
+      `Failed to fetch latest recommendation: ${res.status} ${text}`,
+    );
+  }
   return res.json();
 }
 
