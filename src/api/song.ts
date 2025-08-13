@@ -7,6 +7,7 @@ export interface Song {
   title_kr: string;
   title_en: string;
   title_jp: string;
+  title_yomi?: string;
   artist: string;
   artist_kr: string;
   likedByMe: boolean;

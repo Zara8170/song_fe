@@ -9,6 +9,9 @@ import {
 } from '../utils/tokenStorage';
 import { API_BASE_URL } from '@env';
 
+console.log('--- [Auth API] ---');
+console.log('API_BASE_URL from @env:', API_BASE_URL);
+
 export interface LoginResponseDTO {
   memberId: number;
   email: string;
@@ -16,14 +19,14 @@ export interface LoginResponseDTO {
   accessToken: string;
 }
 
-console.log('API_BASE_URL:', API_BASE_URL);
-
 export const loginWithGoogle = async (
   idToken: string,
 ): Promise<LoginResponseDTO> => {
   try {
-    console.log('로그인 요청 주소:', `${API_BASE_URL}/api/auth/google`);
-    const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+    const requestUrl = `${API_BASE_URL}/api/auth/google`;
+    console.log('로그인 요청 시작. 요청 주소:', requestUrl);
+
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -79,3 +79,5 @@ yarn-error.log
 
 # google-services
 /android/app/google-services.json
+
+/android/gradle.properties

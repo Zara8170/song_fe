@@ -45,6 +45,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  songYomi: {
+    color: '#ccc',
+    fontSize: 14,
+    marginTop: 3,
+    marginBottom: 3,
+    fontStyle: 'italic',
+  },
+
   songSub: {
     color: '#aaa',
     fontSize: 13,
@@ -55,9 +63,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  marqueeStyle: {
-    width: '100%',
-  },
+
   playlistAddButton: {
     padding: 8,
     borderRadius: 20,

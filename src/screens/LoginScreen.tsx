@@ -16,10 +16,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const { showToast } = useToast();
 
   useEffect(() => {
-    console.log(
-      'Configuring Google Sign-In with webClientId:',
-      GOOGLE_WEB_CLIENT_ID,
-    );
+    console.log('--- [LoginScreen] ---');
+    console.log('GOOGLE_WEB_CLIENT_ID from @env:', GOOGLE_WEB_CLIENT_ID);
+
     GoogleSignin.configure({
       webClientId: GOOGLE_WEB_CLIENT_ID,
     });
@@ -36,10 +35,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   const signIn = async () => {
+    console.log('[Login] signIn 함수 시작됨.');
     try {
       await GoogleSignin.hasPlayServices();
 
       const userInfo = await GoogleSignin.signIn();
+
+      console.log('[Login] GoogleSignin.signIn() 성공. userInfo 받음.');
 
       const idToken = userInfo.data?.idToken;
 
@@ -47,6 +49,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         showToast('Google 로그인에서 토큰을 받지 못했습니다.');
         return;
       }
+
+      console.log('[Login] idToken 받음. loginWithGoogle API 호출 시도.');
 
       const loginResponse = await loginWithGoogle(idToken);
 

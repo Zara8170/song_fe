@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { Song } from '../api/song';
 import FavoriteButton from './FavoriteButton';
 import styles from './SongListItem.styles';
-import { Marquee } from '@animatereactnative/marquee';
+
 import { useFavorites } from '../hooks/FavoritesContext';
 import { useToast } from '../contexts/ToastContext';
 import { Playlist, getMyPlaylists, addSongToPlaylist } from '../api/playlist';
@@ -31,10 +31,6 @@ const SongListItem: React.FC<SongListItemProps> = ({
 }) => {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { showToast } = useToast();
-
-  const [songInfoWidth, setSongInfoWidth] = useState(0);
-  const [mainTitleWidth, setMainTitleWidth] = useState(0);
-  const [subTitleWidth, setSubTitleWidth] = useState(0);
 
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -97,10 +93,8 @@ const SongListItem: React.FC<SongListItemProps> = ({
       p => p.playlistId === selectedPlaylistId,
     );
 
-    // 바로 모달창 닫기
     closePlaylistModal();
 
-    // 백그라운드에서 플레이리스트에 곡 추가 처리
     try {
       await addSongToPlaylist(selectedPlaylistId, { songId: item.songId });
       showToast(`"${selectedPlaylist?.title}"에 곡이 추가되었습니다.`);
@@ -185,11 +179,6 @@ const SongListItem: React.FC<SongListItemProps> = ({
   const mainTitle = item.title_jp || item.title_en;
   const subTitle = item.artist;
 
-  const shouldShowMainTitleMarquee =
-    mainTitleWidth > songInfoWidth && songInfoWidth > 0;
-  const shouldShowSubTitleMarquee =
-    subTitleWidth > songInfoWidth && songInfoWidth > 0;
-
   const renderPlaylistItem = ({ item: playlist }: { item: Playlist }) => {
     return (
       <TouchableOpacity
@@ -241,46 +230,18 @@ const SongListItem: React.FC<SongListItemProps> = ({
       </View>
 
       {/* 곡 정보 */}
-      <View
-        style={styles.songInfo}
-        onLayout={event => {
-          setSongInfoWidth(event.nativeEvent.layout.width);
-        }}
-      >
-        {shouldShowMainTitleMarquee ? (
-          <Marquee speed={0.3} spacing={150} style={styles.marqueeStyle}>
-            <Text style={styles.songTitle}>{mainTitle}</Text>
-          </Marquee>
-        ) : (
-          <Text
-            style={styles.songTitle}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            onTextLayout={event => {
-              const textWidth = event.nativeEvent.lines[0]?.width || 0;
-              setMainTitleWidth(textWidth);
-            }}
-          >
-            {mainTitle}
+      <View style={styles.songInfo}>
+        <Text style={styles.songTitle} numberOfLines={1} ellipsizeMode="tail">
+          {mainTitle}
+        </Text>
+        {item.title_yomi && (
+          <Text style={styles.songYomi} numberOfLines={1} ellipsizeMode="tail">
+            {item.title_yomi}
           </Text>
         )}
-        {shouldShowSubTitleMarquee ? (
-          <Marquee speed={0.3} spacing={150} style={styles.marqueeStyle}>
-            <Text style={styles.songSub}>{subTitle}</Text>
-          </Marquee>
-        ) : (
-          <Text
-            style={styles.songSub}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            onTextLayout={event => {
-              const textWidth = event.nativeEvent.lines[0]?.width || 0;
-              setSubTitleWidth(textWidth);
-            }}
-          >
-            {subTitle}
-          </Text>
-        )}
+        <Text style={styles.songSub} numberOfLines={1} ellipsizeMode="tail">
+          {subTitle}
+        </Text>
       </View>
 
       {/* 액션 버튼들 */}
