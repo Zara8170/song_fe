@@ -7,7 +7,7 @@ import java.util.Properties
 import java.io.FileInputStream
 
 project.ext.env = new Properties()
-def envFile = new File(project.rootProject.file('.env'.absolutePath))
+def envFile = project.rootProject.file('.env')
 if (envFile.exists()) {
     project.ext.env.load(new FileInputStream(envFile))
 }
@@ -84,19 +84,20 @@ def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 android {
     ndkVersion rootProject.ext.ndkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.song_fe"
+
     defaultConfig {
         applicationId "com.song_fe"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.2"
+        minSdk = rootProject.ext.minSdkVersion
+        targetSdk = rootProject.ext.targetSdkVersion
+        versionCode = 4
+        versionName = "1.0.4"
 
         buildConfigField "String", "API_BASE_URL", "\"${project.ext.env.API_BASE_URL}\""
     }
+
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -113,17 +114,19 @@ android {
             }
         }
     }
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
             signingConfig signingConfigs.release
-            minifyEnabled enableProguardInReleaseBuilds
+            minifyEnabled = enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
 }
+
 
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
