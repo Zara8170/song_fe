@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  BackHandler,
 } from 'react-native';
 import { searchSongs, fetchSongs, Song } from '../api/song';
 import { useFocusEffect } from '@react-navigation/native';
@@ -202,7 +203,35 @@ const SearchScreen = () => {
     }).start();
   }, [filter, tabAnim]);
 
-  useFocusEffect(useCallback(() => {}, []));
+  // Android 뒤로가기 버튼 처리
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        // 검색창에 값이 있으면 검색어를 지우고 true 반환 (기본 뒤로가기 동작 방지)
+        if (query.trim()) {
+          if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
+          }
+          setQuery('');
+          setHasSearched(false);
+          setSearchResults([]);
+          setSearchPage(1);
+          setSearchHasMore(true);
+          prevQueryRef.current = '';
+          return true;
+        }
+        // 검색창이 비어있으면 false 반환 (기본 뒤로가기 동작 허용)
+        return false;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backAction,
+      );
+
+      return () => backHandler.remove();
+    }, [query]),
+  );
 
   const handleEndReached = () => {
     if (loading) return;
