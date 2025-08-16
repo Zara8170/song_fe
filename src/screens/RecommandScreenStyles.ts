@@ -76,8 +76,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
     lineHeight: 22,
+  },
+  songYomi: {
+    color: '#aaa',
+    fontSize: 14,
+    marginBottom: 4,
+    fontStyle: 'italic',
   },
   artistName: {
     color: '#bbb',
@@ -155,7 +161,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  themeSongYomi: {
+    color: '#aaa',
+    fontSize: 13,
+    marginBottom: 2,
+    fontStyle: 'italic',
   },
   themeSongArtist: {
     color: '#bbb',

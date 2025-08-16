@@ -203,11 +203,9 @@ const SearchScreen = () => {
     }).start();
   }, [filter, tabAnim]);
 
-  // Android 뒤로가기 버튼 처리
   useFocusEffect(
     useCallback(() => {
       const backAction = () => {
-        // 검색창에 값이 있으면 검색어를 지우고 true 반환 (기본 뒤로가기 동작 방지)
         if (query.trim()) {
           if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
@@ -218,9 +216,13 @@ const SearchScreen = () => {
           setSearchPage(1);
           setSearchHasMore(true);
           prevQueryRef.current = '';
+
+          setTimeout(() => {
+            Keyboard.dismiss();
+          }, 100);
+
           return true;
         }
-        // 검색창이 비어있으면 false 반환 (기본 뒤로가기 동작 허용)
         return false;
       };
 

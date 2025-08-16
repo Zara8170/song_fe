@@ -167,6 +167,11 @@ const RecommandScreen = () => {
             <Text style={styles.themeSongTitle} numberOfLines={1}>
               {song.title_jp || song.title_en}
             </Text>
+            {song.title_yomi && (
+              <Text style={styles.themeSongYomi} numberOfLines={1}>
+                {song.title_yomi}
+              </Text>
+            )}
             <Text style={styles.themeSongArtist} numberOfLines={1}>
               {song.artist || song.artist_kr}
             </Text>
@@ -189,6 +194,11 @@ const RecommandScreen = () => {
       <Text style={styles.songTitle} numberOfLines={2}>
         {item.title_jp || item.title_en}
       </Text>
+      {item.title_yomi && (
+        <Text style={styles.songYomi} numberOfLines={1}>
+          {item.title_yomi}
+        </Text>
+      )}
       <Text style={styles.artistName} numberOfLines={1}>
         {item.artist || item.artist_kr}
       </Text>

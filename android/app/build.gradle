@@ -92,8 +92,8 @@ android {
         applicationId "com.song_fe"
         minSdk = rootProject.ext.minSdkVersion
         targetSdk = rootProject.ext.targetSdkVersion
-        versionCode = 8
-        versionName = "1.0.8"
+        versionCode = 10
+        versionName = "1.0.10"
 
         buildConfigField "String", "API_BASE_URL", "\"${project.ext.env.API_BASE_URL}\""
     }

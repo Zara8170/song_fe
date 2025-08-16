@@ -22,6 +22,7 @@ export interface RecommendationSong {
   title_jp: string;
   title_kr: string;
   title_en: string;
+  title_yomi?: string;
   artist: string;
   artist_kr: string;
   tj_number: string;
@@ -39,6 +40,7 @@ export interface RecommendationCandidate {
   title_jp: string;
   title_kr: string;
   title_en: string;
+  title_yomi?: string;
   artist: string;
   artist_kr: string;
   genre: string;
