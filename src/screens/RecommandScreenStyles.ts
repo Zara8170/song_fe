@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   karaokeCodeKY: {
-    backgroundColor: '#EB431E',
+    backgroundColor: '#3500CC',
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   themeKaraokeCodeKY: {
-    backgroundColor: '#EB431E',
+    backgroundColor: '#3500CC',
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',

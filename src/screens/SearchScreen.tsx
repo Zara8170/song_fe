@@ -9,7 +9,6 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
-  Animated,
   Dimensions,
   BackHandler,
 } from 'react-native';
@@ -57,7 +56,7 @@ const SearchScreen = () => {
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
   const flatListRef = useRef<FlatList>(null);
-  const tabAnim = useRef(new Animated.Value(0)).current;
+
   const isFetchingRef = useRef(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevQueryRef = useRef('');
@@ -194,14 +193,6 @@ const SearchScreen = () => {
     loadAllSongs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    Animated.spring(tabAnim, {
-      toValue: TAB_TYPES.indexOf(filter),
-      useNativeDriver: false,
-      friction: 7,
-    }).start();
-  }, [filter, tabAnim]);
 
   useFocusEffect(
     useCallback(() => {
@@ -389,17 +380,6 @@ const SearchScreen = () => {
             </Text>
           </TouchableOpacity>
         ))}
-        <Animated.View
-          style={[
-            styles.tabUnderline,
-            {
-              left: tabAnim.interpolate({
-                inputRange: [0, 1, 2],
-                outputRange: ['0%', '33.33%', '66.66%'],
-              }),
-            },
-          ]}
-        />
       </View>
 
       {/* 리스트 */}

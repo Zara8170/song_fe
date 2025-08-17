@@ -74,21 +74,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   tabTextActive: {
-    color: '#7ed6f7',
-    backgroundColor: '#2d3436',
+    color: '#fff',
+    backgroundColor: '#3500CC',
+    opacity: 1,
   },
   tabTextInactive: {
     color: '#aaa',
-    backgroundColor: 'transparent',
-  },
-  tabUnderline: {
-    position: 'absolute',
-    bottom: 0,
-    width: '33.33%',
-    height: 4,
-    backgroundColor: '#7ed6f7',
-    borderRadius: 2,
-    zIndex: 1,
+    backgroundColor: '#3500CC',
+    opacity: 0.4,
   },
   // MainScreen에서 가져온 리스트 스타일들
   list: {
