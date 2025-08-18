@@ -64,6 +64,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 
       <View style={styles.content}>
         <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('LanguageSettings')}
+          >
+            <Ionicons name="language-outline" size={24} color="#7ed6f7" />
+            <Text style={[styles.menuText, { color: '#7ed6f7' }]}>
+              언어 설정
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={24} color="#ff6b6b" />
             <Text style={styles.menuText}>로그아웃</Text>

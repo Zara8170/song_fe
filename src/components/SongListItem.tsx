@@ -6,6 +6,7 @@ import styles from './SongListItem.styles';
 
 import { useFavorites } from '../hooks/FavoritesContext';
 import { useToast } from '../contexts/ToastContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { Playlist, getMyPlaylists, addSongToPlaylist } from '../api/playlist';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import BaseModal from './BaseModal';
@@ -31,6 +32,7 @@ const SongListItem: React.FC<SongListItemProps> = ({
 }) => {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { showToast } = useToast();
+  const { titleLanguage, artistLanguage } = useLanguage();
 
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -176,8 +178,12 @@ const SongListItem: React.FC<SongListItemProps> = ({
   const shouldShowTJ = showFilter === 'ALL' || showFilter === 'TJ';
   const shouldShowKY = showFilter === 'ALL' || showFilter === 'KY';
 
-  const mainTitle = item.title_jp || item.title_en;
-  const subTitle = item.artist;
+  // 언어 설정에 따른 제목 선택
+  const mainTitle =
+    titleLanguage === 'korean' ? item.title_kr : item.title_jp || item.title_en;
+
+  // 언어 설정에 따른 가수명 선택
+  const subTitle = artistLanguage === 'korean' ? item.artist_kr : item.artist;
 
   const renderPlaylistItem = ({ item: playlist }: { item: Playlist }) => {
     return (
