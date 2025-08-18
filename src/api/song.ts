@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '@env';
+import { fetchWithAuth } from './fetchWithAuth';
 
 export interface Song {
   songId: number;
@@ -7,8 +7,10 @@ export interface Song {
   title_kr: string;
   title_en: string;
   title_jp: string;
+  title_yomi?: string;
   artist: string;
   artist_kr: string;
+  likedByMe: boolean;
 }
 
 export interface SongListResponse {
@@ -16,16 +18,77 @@ export interface SongListResponse {
   next: boolean;
 }
 
+export interface RecommendationSong {
+  title_jp: string;
+  title_kr: string;
+  title_en: string;
+  title_yomi?: string;
+  artist: string;
+  artist_kr: string;
+  tj_number: string;
+  ky_number: string;
+}
+
+export interface RecommendationGroup {
+  label: string;
+  tagline: string;
+  songs: RecommendationSong[];
+}
+
+export interface RecommendationCandidate {
+  song_id: number;
+  title_jp: string;
+  title_kr: string;
+  title_en: string;
+  title_yomi?: string;
+  artist: string;
+  artist_kr: string;
+  genre: string;
+  mood: string;
+  tj_number: string;
+  ky_number: string;
+  recommendation_type: 'preference' | 'random';
+  matched_criteria: string[];
+}
+
+export interface RecommendationResponse {
+  groups: RecommendationGroup[];
+  candidates: RecommendationCandidate[];
+}
+
+// New: Async job API types
+export type RecommendationJobStatusType =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'canceled';
+
+export interface RecommendationJobCreateResponse {
+  jobId: string;
+  status: RecommendationJobStatusType;
+  statusUrl?: string;
+}
+
+export interface RecommendationJobStatusResponse {
+  jobId: string;
+  status: RecommendationJobStatusType;
+  progress?: number;
+  submittedAt?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  result?: RecommendationResponse;
+  error?: { code: string; message: string; details?: Record<string, unknown> };
+}
+
 export async function fetchSongs(
   page: number,
   size: number,
   signal?: AbortSignal,
 ): Promise<SongListResponse> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/song/list?page=${page}&size=${size}`,
-    { signal },
-  );
-  if (!res.ok) throw new Error('API error');
+  const res = await fetchWithAuth(`/api/song/list?page=${page}&size=${size}`, {
+    signal,
+  });
   return res.json();
 }
 
@@ -36,40 +99,138 @@ export async function searchSongs(
   target: string = 'ALL',
   signal?: AbortSignal,
 ): Promise<SongListResponse> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/es/song/search?keyword=${encodeURIComponent(
+  const res = await fetchWithAuth(
+    `/api/es/song/search?keyword=${encodeURIComponent(
       query,
     )}&target=${target}&page=${page}&size=${size}`,
     { signal },
   );
-  if (!res.ok) throw new Error('API error');
   return res.json();
 }
 
 export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
-  const res = await fetch(`${API_BASE_URL}/api/song/batch`, {
+  const res = await fetchWithAuth(`/api/song/batch`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(songIds),
   });
-  if (!res.ok) throw new Error('API error');
   return res.json();
 }
 
-interface RecommendationResponseFromPythonDTO {
-  recommendation: string;
+// New: Create recommendation job (202 Accepted expected)
+export async function createRecommendationJob(
+  favoriteSongIds: number[],
+  options?: {
+    strategy?: 'default' | 'fast' | 'deep';
+    top_k?: number;
+    locale?: 'ko' | 'ja' | 'en';
+    source?: 'login' | 'manual';
+  },
+): Promise<RecommendationJobCreateResponse> {
+  const body = {
+    favorite_song_ids: favoriteSongIds,
+    strategy: options?.strategy ?? 'default',
+    top_k: options?.top_k ?? 50,
+    locale: options?.locale,
+    source: options?.source ?? 'manual',
+  };
+
+  const res = await fetchWithAuth(`/api/recommendation/jobs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    // surface server-side error
+    const text = await res.text();
+    throw new Error(
+      `Failed to create recommendation job: ${res.status} ${text}`,
+    );
+  }
+
+  return res.json();
+}
+
+// New: Get recommendation job status (and result if succeeded)
+export async function getRecommendationJobStatus(
+  jobId: string,
+): Promise<RecommendationJobStatusResponse> {
+  const res = await fetchWithAuth(`/api/recommendation/jobs/${jobId}`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to fetch job status: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+// New: Fetch latest recommendation for current member
+export async function fetchLatestRecommendation(): Promise<RecommendationResponse | null> {
+  const res = await fetchWithAuth(`/api/recommendation/latest`);
+  if (res.status === 204) {
+    return null;
+  }
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(
+      `Failed to fetch latest recommendation: ${res.status} ${text}`,
+    );
+  }
+  return res.json();
 }
 
 export const requestRecommendation = async (
-  message: string,
-): Promise<RecommendationResponseFromPythonDTO> => {
-  const res = await fetch(`${API_BASE_URL}/api/recommendation/request`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ message }),
-  });
-  if (!res.ok) throw new Error('API error');
-  return res.json();
+  favoriteSongIds: number[],
+): Promise<RecommendationResponse> => {
+  const requestBody = {
+    favorite_song_ids: favoriteSongIds,
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const res = await fetchWithAuth('/api/recommendation/request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out after 30 seconds');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };
+
+export async function toggleLike(songId: number) {
+  const res = await fetchWithAuth(`/api/likes/songs/${songId}`, {
+    method: 'POST',
+  });
+  return res.json() as Promise<{ songId: number; liked: boolean }>;
+}
+
+export async function fetchMyLikes(): Promise<Song[]> {
+  const res = await fetchWithAuth('/api/likes');
+  const data = await res.json();
+
+  // 백엔드 응답이 배열이 아닌 경우 빈 배열 반환
+  if (!Array.isArray(data)) {
+    console.warn('fetchMyLikes: Backend response is not an array:', data);
+    return [];
+  }
+
+  return data.filter((song: any) => song && song.songId !== undefined);
+}

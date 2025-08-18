@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,181 +6,426 @@ import {
   FlatList,
   ActivityIndicator,
   Keyboard,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+  Dimensions,
+  BackHandler,
 } from 'react-native';
-import { searchSongs, Song } from '../api/song';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { searchSongs, fetchSongs, Song } from '../api/song';
 import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SongListItem from '../components/SongListItem';
+// import TopButton from '../components/TopButton';
+import SearchTypeDropdown, {
+  SearchTargetType,
+} from '../components/SearchTypeDropdown';
 import styles from './SearchScreen.styles';
 import { useToast } from '../contexts/ToastContext';
 
 const PAGE_SIZE = 20;
-const RECENT_KEY = 'recent_search_keywords';
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const TAB_TYPES = ['ALL', 'TJ', 'KY'] as const;
+type TabType = (typeof TAB_TYPES)[number];
+const TAB_LABELS: Record<TabType, string> = {
+  ALL: 'TJ/KY',
+  TJ: 'TJ',
+  KY: 'KY',
+};
+
+const SEARCH_TYPE_LABELS: Record<SearchTargetType, string> = {
+  ALL: '통합',
+  TITLE: '제목',
+  ARTIST: '가수',
+};
 
 const SearchScreen = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Song[]>([]);
+  const [searchResults, setSearchResults] = useState<Song[]>([]);
+  const [allSongs, setAllSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState('');
-  const [recent, setRecent] = useState<string[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [filter, setFilter] = useState<TabType>('ALL');
+  const [searchPage, setSearchPage] = useState(1);
+  const [searchHasMore, setSearchHasMore] = useState(true);
+  // const [showTopButton, setShowTopButton] = useState(false);
+  const [searchType, setSearchType] = useState<SearchTargetType>('ALL');
+  const [showSearchTypeDropdown, setShowSearchTypeDropdown] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+
   const flatListRef = useRef<FlatList>(null);
+
+  const isFetchingRef = useRef(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevQueryRef = useRef('');
   const { showToast } = useToast();
 
-  // 탭 이동 시 상태 초기화 (진입 시 초기화)
-  useFocusEffect(
-    useCallback(() => {
-      setQuery('');
-      setResults([]);
-      setPage(1);
-      setHasMore(true);
-      setError('');
-    }, []),
-  );
+  const loadAllSongs = useCallback(async () => {
+    if (isFetchingRef.current || !hasMore) return;
 
-  // 최근 검색어 불러오기
-  React.useEffect(() => {
-    AsyncStorage.getItem(RECENT_KEY).then(data => {
-      if (data) setRecent(JSON.parse(data));
-    });
-  }, []);
-
-  // 최근 검색어 저장
-  const saveRecent = async (keyword: string) => {
-    let arr = [keyword, ...recent.filter(k => k !== keyword)];
-    if (arr.length > 10) arr = arr.slice(0, 10);
-    setRecent(arr);
-    await AsyncStorage.setItem(RECENT_KEY, JSON.stringify(arr));
-  };
-
-  // 최근 검색어 전체 삭제
-  const handleClearRecent = async () => {
-    setRecent([]);
-    await AsyncStorage.removeItem(RECENT_KEY);
-  };
-
-  const handleSearch = async (reset = true, customQuery?: string) => {
-    const searchValue = customQuery ?? query;
-    if (!searchValue.trim()) return;
+    isFetchingRef.current = true;
     setLoading(true);
-    setError('');
+
+    const controller = new AbortController();
+
     try {
-      const data = await searchSongs(
-        searchValue,
-        reset ? 1 : page,
-        PAGE_SIZE,
-        'ALL',
+      const data = await fetchSongs(page, PAGE_SIZE, controller.signal);
+
+      setAllSongs(prev =>
+        page === 1 ? data.dtoList : [...prev, ...data.dtoList],
       );
-      setResults(reset ? data.dtoList : [...results, ...data.dtoList]);
       setHasMore(data.next);
-      setPage(reset ? 2 : page + 1);
-      if (reset)
-        flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
-      saveRecent(searchValue);
-    } catch (e) {
-      setError('검색 중 오류가 발생했습니다.');
+
+      if (data.next) {
+        setPage(prev => prev + 1);
+      }
+    } catch (e: any) {
+      if (e.name !== 'AbortError') {
+        console.error(`[SearchScreen] 데이터 로드 오류:`, e);
+        showToast('노래 목록을 불러오는 데 실패했습니다.');
+        setHasMore(false);
+      }
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [page, hasMore, showToast]);
+
+  const handleSearch = useCallback(
+    async (reset = true, customQuery?: string) => {
+      const searchValue = customQuery ?? query;
+      if (!searchValue.trim()) {
+        setHasSearched(false);
+        setSearchResults([]);
+        return;
+      }
+      setLoading(true);
+      setHasSearched(true);
+      try {
+        const data = await searchSongs(
+          searchValue,
+          reset ? 1 : searchPage,
+          PAGE_SIZE,
+          searchType,
+        );
+        setSearchResults(prev =>
+          reset ? data.dtoList : [...prev, ...data.dtoList],
+        );
+        setSearchHasMore(data.next);
+        setSearchPage(reset ? 2 : searchPage + 1);
+        if (reset)
+          flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+      } catch (e) {
+        showToast('검색 중 오류가 발생했습니다.');
+        setSearchHasMore(false);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [query, searchPage, searchType, showToast],
+  );
+
+  const handleRealtimeSearch = useCallback(
+    (searchValue: string) => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      const hasKorean = (text: string) => {
+        const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
+        return koreanRegex.test(text);
+      };
+
+      const trimmedText = searchValue.trim();
+      let shouldSearch = false;
+
+      if (trimmedText.length === 0) {
+        shouldSearch = false;
+      } else if (hasKorean(trimmedText)) {
+        shouldSearch = trimmedText.length >= 1;
+      } else {
+        shouldSearch = trimmedText.length >= 2;
+      }
+
+      if (!shouldSearch) {
+        setHasSearched(false);
+        setSearchResults([]);
+        prevQueryRef.current = '';
+        return;
+      }
+
+      if (prevQueryRef.current === searchValue.trim()) {
+        return;
+      }
+
+      debounceTimeoutRef.current = setTimeout(() => {
+        prevQueryRef.current = searchValue.trim();
+        handleSearch(true, searchValue);
+      }, 300);
+    },
+    [handleSearch],
+  );
+
+  useEffect(() => {
+    handleRealtimeSearch(query);
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [query, handleRealtimeSearch]);
+
+  useEffect(() => {
+    if (query.trim() && hasSearched) {
+      setSearchResults([]);
+      setSearchPage(1);
+      setSearchHasMore(true);
+      prevQueryRef.current = '';
+      handleSearch(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchType]);
+
+  useEffect(() => {
+    loadAllSongs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        if (query.trim()) {
+          if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
+          }
+          setQuery('');
+          setHasSearched(false);
+          setSearchResults([]);
+          setSearchPage(1);
+          setSearchHasMore(true);
+          prevQueryRef.current = '';
+
+          setTimeout(() => {
+            Keyboard.dismiss();
+          }, 100);
+
+          return true;
+        }
+        return false;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backAction,
+      );
+
+      return () => backHandler.remove();
+    }, [query]),
+  );
+
+  const handleEndReached = () => {
+    if (loading) return;
+
+    if (hasSearched && query.trim()) {
+      if (!searchHasMore) return;
+      handleSearch(false);
+    } else {
+      if (isFetchingRef.current || !hasMore) return;
+      loadAllSongs();
     }
   };
 
-  const handleEndReached = () => {
-    if (!hasMore || loading) return;
-    handleSearch(false);
+  const handleContentSizeChange = (_w: number, h: number) => {
+    if (
+      !hasSearched &&
+      h < SCREEN_HEIGHT &&
+      hasMore &&
+      !loading &&
+      !isFetchingRef.current
+    ) {
+      loadAllSongs();
+    }
   };
 
-  const handleRecentPress = (keyword: string) => {
-    setQuery(keyword);
-    handleSearch(true, keyword);
-    Keyboard.dismiss();
+  // const handleScroll = (event: any) => {
+  //   const offsetY = event.nativeEvent.contentOffset.y;
+  //   setShowTopButton(offsetY > 100);
+  // };
+
+  // const handlePressTop = () => {
+  //   flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  // };
+
+  const handleSearchTypePress = () => {
+    setDropdownPosition({ x: 12, y: 65 });
+    setShowSearchTypeDropdown(true);
   };
+
+  const currentData = hasSearched && query.trim() ? searchResults : allSongs;
+
+  const filteredData = Array.isArray(currentData)
+    ? currentData.filter(song => {
+        if (filter === 'TJ') return !!song.tj_number;
+        if (filter === 'KY') return !!song.ky_number;
+        return true;
+      })
+    : [];
 
   const renderItem = ({ item }: { item: Song }) => (
     <SongListItem
       item={item}
-      showFilter="ALL"
+      showFilter={filter}
       onFavoriteAdd={() => showToast('즐겨찾기에 추가되었습니다.')}
       onFavoriteRemove={() => showToast('즐겨찾기에서 삭제되었습니다.')}
     />
   );
 
   return (
-    <View style={styles.container}>
-      {/* 검색창 */}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#23292e" />
+
+      {/* 검색바 */}
       <View style={styles.searchBoxWrapper}>
-        <View style={styles.searchBoxInner}>
+        <View style={styles.searchContainer}>
+          {/* 검색 타입 선택 버튼 */}
+          <TouchableOpacity
+            style={styles.searchTypeButton}
+            onPress={handleSearchTypePress}
+          >
+            <Text style={styles.searchTypeText}>
+              {SEARCH_TYPE_LABELS[searchType]}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color="#7ed6f7"
+              style={styles.chevronIcon}
+            />
+          </TouchableOpacity>
+
           <TextInput
             style={styles.searchInput}
-            placeholder="곡명, 가수로 검색하세요"
+            placeholder={
+              searchType === 'ALL'
+                ? '곡명, 가수로 검색하세요'
+                : searchType === 'TITLE'
+                ? '곡명으로 검색하세요'
+                : '가수명으로 검색하세요'
+            }
             placeholderTextColor="#aaa"
             value={query}
-            onChangeText={setQuery}
+            onChangeText={text => {
+              setQuery(text);
+            }}
             onSubmitEditing={() => {
               Keyboard.dismiss();
-              handleSearch();
+              const trimmedQuery = query.trim();
+              const hasKorean = (text: string) => {
+                const koreanRegex = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;
+                return koreanRegex.test(text);
+              };
+
+              const shouldSearch = hasKorean(trimmedQuery)
+                ? trimmedQuery.length >= 1
+                : trimmedQuery.length >= 2;
+
+              if (shouldSearch) {
+                handleSearch();
+              }
             }}
             returnKeyType="search"
           />
-          {/* 검색 아이콘 */}
-          <View style={styles.searchIconWrapper}>
-            <View style={styles.searchIconBg}>
-              <Ionicons
-                name="search"
-                size={22}
-                color="#23292e"
-                onPress={() => {
-                  Keyboard.dismiss();
-                  handleSearch();
-                }}
-              />
-            </View>
-          </View>
+          {query.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={() => {
+                if (debounceTimeoutRef.current) {
+                  clearTimeout(debounceTimeoutRef.current);
+                }
+                setQuery('');
+                setHasSearched(false);
+                setSearchResults([]);
+                setSearchPage(1);
+                setSearchHasMore(true);
+                prevQueryRef.current = '';
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="검색어 삭제"
+              accessibilityRole="button"
+            >
+              <Ionicons name="close-circle" size={20} color="#aaa" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      {/* 최근 검색어: 검색 결과 없을 때만 노출 */}
-      {results.length === 0 && recent.length > 0 && query.trim() === '' && (
-        <View style={styles.recentWrapper}>
-          <View style={styles.recentHeader}>
-            <Text style={styles.recentTitle}>최근 검색어</Text>
-            <Text onPress={handleClearRecent} style={styles.recentClear}>
-              초기화
-            </Text>
-          </View>
-          {recent.map(keyword => (
+
+      <View style={styles.tabBar}>
+        {TAB_TYPES.map(type => (
+          <TouchableOpacity
+            key={type}
+            onPress={() => setFilter(type)}
+            activeOpacity={0.7}
+            style={styles.tabButton}
+          >
             <Text
-              key={keyword}
-              onPress={() => handleRecentPress(keyword)}
-              style={styles.recentKeyword}
+              style={[
+                styles.tabText,
+                filter === type ? styles.tabTextActive : styles.tabTextInactive,
+              ]}
             >
-              #{keyword}
+              {TAB_LABELS[type]}
             </Text>
-          ))}
-        </View>
-      )}
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* 리스트 */}
       <FlatList
         ref={flatListRef}
-        data={results}
+        style={styles.list}
+        data={filteredData}
         renderItem={renderItem}
         keyExtractor={item => item.songId.toString()}
         onEndReached={handleEndReached}
-        onEndReachedThreshold={0.4}
+        onEndReachedThreshold={0.1}
+        onContentSizeChange={handleContentSizeChange}
+        // onScroll={handleScroll}
+        // scrollEventThrottle={16}
         ListFooterComponent={
           loading ? (
-            <ActivityIndicator color="#7ed6f7" style={{ margin: 16 }} />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="#fff" />
+            </View>
           ) : null
         }
         contentContainerStyle={{ paddingBottom: 20 }}
       />
-      {/* 검색 결과 없음 안내 */}
-      {!loading && results.length === 0 && query.trim() !== '' && !error && (
-        <View style={styles.noResultWrapper}>
-          <Text style={styles.noResultText}>검색 결과가 없습니다.</Text>
-        </View>
-      )}
-    </View>
+
+      {/* 검색 결과 없음 메시지 */}
+      {!loading &&
+        filteredData.length === 0 &&
+        query.trim() !== '' &&
+        hasSearched && (
+          <View style={styles.noResultWrapper}>
+            <Text style={styles.noResultText}>검색 결과가 없습니다.</Text>
+          </View>
+        )}
+
+      {/* 맨 위로 버튼 */}
+      {/* <TopButton visible={showTopButton} onPress={handlePressTop} /> */}
+
+      {/* 검색 타입 선택 드롭다운 */}
+      <SearchTypeDropdown
+        visible={showSearchTypeDropdown}
+        onClose={() => setShowSearchTypeDropdown(false)}
+        currentType={searchType}
+        onSelect={type => setSearchType(type)}
+        position={dropdownPosition}
+      />
+    </SafeAreaView>
   );
 };
 

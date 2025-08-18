@@ -1,172 +1,119 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  SafeAreaView,
-  StatusBar,
-  Text,
   View,
-  Animated,
+  Text,
   TouchableOpacity,
+  StatusBar,
+  Platform,
+  Image,
 } from 'react-native';
-import { fetchSongs, Song } from '../api/song';
-import TopButton from '../components/TopButton';
-import SongListItem from '../components/SongListItem';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './MainScreen.styles';
-import { useToast } from '../contexts/ToastContext';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const PAGE_SIZE = 20;
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const TAB_TYPES = ['ALL', 'TJ', 'KY'] as const;
-type TabType = (typeof TAB_TYPES)[number];
-const TAB_LABELS: Record<TabType, string> = {
-  ALL: 'TJ/KY',
-  TJ: 'TJ',
-  KY: 'KY',
-};
+interface MainScreenProps {
+  navigation: any;
+}
 
-const MainScreen = () => {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [filter, setFilter] = useState<TabType>('ALL');
-  const tabAnim = useRef(new Animated.Value(0)).current;
+const MainScreen = ({ navigation }: MainScreenProps) => {
+  const menuItems = [
+    {
+      id: 1,
+      title: '노래검색',
+      icon: 'search-outline',
+      color: '#7ed6f7',
+      route: 'SearchTab',
+    },
+    {
+      id: 2,
+      title: '보관함',
+      icon: 'folder-outline',
+      color: '#ff7675',
+      route: 'LibraryTab',
+    },
+    {
+      id: 3,
+      title: '노래 추천',
+      icon: 'sparkles-outline',
+      color: '#a29bfe',
+      route: 'RecommandTab',
+    },
+    {
+      id: 4,
+      title: 'Top 100',
+      icon: 'trophy-outline',
+      color: '#feca57',
+      route: 'Top100',
+    },
+    {
+      id: 5,
+      title: '신곡',
+      icon: 'musical-notes-outline',
+      color: '#ff9ff3',
+      route: 'NewSong',
+    },
+  ];
 
-  const isFetchingRef = useRef(false);
-  const flatListRef = useRef<FlatList>(null);
-  const [showTopButton, setShowTopButton] = useState(false);
-  const { showToast } = useToast();
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const load = async () => {
-      if (isFetchingRef.current || !hasMore) return;
-      isFetchingRef.current = true;
-      setLoading(true);
-
-      try {
-        const data = await fetchSongs(page, PAGE_SIZE, controller.signal);
-        setSongs(prev =>
-          page === 1 ? data.dtoList : [...prev, ...data.dtoList],
-        );
-        setHasMore(data.next);
-      } catch (e: any) {
-        if (e.name !== 'AbortError') console.error(e);
-      } finally {
-        setLoading(false);
-        isFetchingRef.current = false;
-      }
-    };
-
-    load();
-    return () => controller.abort();
-  }, [page, hasMore]);
-
-  useEffect(() => {
-    Animated.spring(tabAnim, {
-      toValue: TAB_TYPES.indexOf(filter),
-      useNativeDriver: false,
-      friction: 7,
-    }).start();
-  }, [filter, tabAnim]);
-
-  const handleEndReached = () => {
-    if (isFetchingRef.current || loading || !hasMore) return;
-    setPage(prev => prev + 1);
+  const handleMenuPress = (route: string) => {
+    navigation.navigate(route);
   };
-
-  const handleContentSizeChange = (_w: number, h: number) => {
-    if (h < SCREEN_HEIGHT && hasMore && !loading && !isFetchingRef.current) {
-      setPage(prev => prev + 1);
-    }
-  };
-
-  const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    setShowTopButton(offsetY > 100);
-  };
-
-  const handlePressTop = () => {
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  };
-
-  const filteredSongs = songs.filter(song => {
-    if (filter === 'TJ') return !!song.tj_number;
-    if (filter === 'KY') return !!song.ky_number;
-    return true;
-  });
-
-  const keyExtractor = (item: Song) => item.songId.toString();
-
-  const renderItem = ({ item }: { item: Song }) => (
-    <SongListItem
-      item={item}
-      showFilter={filter}
-      onFavoriteAdd={() => showToast('즐겨찾기에 추가되었습니다.')}
-      onFavoriteRemove={() => showToast('즐겨찾기에서 삭제되었습니다.')}
-    />
-  );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.topHeader} />
-      <StatusBar barStyle="light-content" backgroundColor="#23292e" />
-      {/* 상단 Animated 탭 */}
-      <View style={styles.tabBar}>
-        {TAB_TYPES.map(type => (
-          <TouchableOpacity
-            key={type}
-            onPress={() => setFilter(type)}
-            activeOpacity={0.7}
-            style={styles.tabButton}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                filter === type ? styles.tabTextActive : styles.tabTextInactive,
-              ]}
-            >
-              {TAB_LABELS[type]}
-            </Text>
-          </TouchableOpacity>
-        ))}
-        {/* Animated underline */}
-        <Animated.View
-          style={[
-            styles.tabUnderline,
-            {
-              left: tabAnim.interpolate({
-                inputRange: [0, 1, 2],
-                outputRange: ['0%', '33.33%', '66.66%'],
-              }),
-            },
-          ]}
-        />
-      </View>
-      {/* 리스트 */}
-      <FlatList
-        ref={flatListRef}
-        style={styles.list}
-        data={filteredSongs}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.1}
-        onContentSizeChange={handleContentSizeChange}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        ListFooterComponent={
-          loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator color="#fff" />
-            </View>
-          ) : null
-        }
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#23292e"
+        translucent={false}
       />
-      <TopButton visible={showTopButton} onPress={handlePressTop} />
+      <View
+        style={[
+          styles.headerContainer,
+          {
+            paddingTop: Platform.OS === 'android' ? 30 : 10,
+          },
+        ]}
+      >
+        <View style={styles.titleContainer}>
+          <View style={styles.leftContainer}>
+            <Image
+              source={require('../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png')}
+              style={styles.appIcon}
+            />
+            <Text style={styles.appTitle}>UtaBox</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Ionicons name="menu" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.menuContainer}>
+        <Text style={styles.welcomeTitle}>환영합니다!</Text>
+        <Text style={styles.welcomeSubtitle}>원하는 메뉴를 선택해주세요</Text>
+
+        <View style={styles.menuGrid}>
+          {menuItems.map(item => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.menuItem}
+              onPress={() => handleMenuPress(item.route)}
+              activeOpacity={0.8}
+            >
+              <View
+                style={[
+                  styles.menuIconContainer,
+                  { backgroundColor: item.color + '20' },
+                ]}
+              >
+                <Ionicons name={item.icon} size={30} color={item.color} />
+              </View>
+              <Text style={styles.menuTitle}>{item.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
     </SafeAreaView>
   );
 };

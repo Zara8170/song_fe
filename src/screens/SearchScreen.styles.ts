@@ -10,73 +10,92 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 16,
   },
-  searchBoxInner: {
-    position: 'relative',
-    width: '100%',
-  },
-  searchInput: {
-    width: '100%',
+
+  searchContainer: {
+    flexDirection: 'row',
     backgroundColor: '#363c44',
     borderRadius: 12,
     height: 48,
+    overflow: 'hidden',
+  },
+  searchTypeButton: {
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    backgroundColor: '#2d3436',
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    minWidth: 80,
+  },
+  searchTypeText: {
+    color: '#7ed6f7',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  searchInput: {
+    flex: 1,
     color: '#fff',
     paddingHorizontal: 16,
     fontSize: 16,
     fontWeight: 'bold',
-    paddingRight: 48,
+    backgroundColor: '#363c44',
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
   },
-  searchIconWrapper: {
-    position: 'absolute',
-    right: 8,
-    top: 6,
-    height: 36,
-    width: 36,
+  searchInputWithType: {
+    paddingLeft: 16,
+  },
+  chevronIcon: {
+    marginLeft: 4,
+  },
+  clearButton: {
+    width: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  searchIconBg: {
-    backgroundColor: '#7ed6f7',
-    borderRadius: 18,
-    width: 36,
-    height: 36,
+  tabBar: {
+    flexDirection: 'row',
     justifyContent: 'center',
+    marginVertical: 12,
+    position: 'relative',
+  },
+  tabButton: {
+    flex: 1,
     alignItems: 'center',
+  },
+  tabText: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    paddingVertical: 8,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    overflow: 'hidden',
+  },
+  tabTextActive: {
+    color: '#fff',
+    backgroundColor: '#3500CC',
+    opacity: 1,
+  },
+  tabTextInactive: {
+    color: '#aaa',
+    backgroundColor: '#3500CC',
+    opacity: 0.4,
+  },
+  // MainScreen에서 가져온 리스트 스타일들
+  list: {
+    flex: 1,
+  },
+  loadingContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorText: {
     color: '#ff7675',
     textAlign: 'center',
     marginBottom: 8,
-  },
-  recentWrapper: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  recentTitle: {
-    color: '#aaa',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  recentClear: {
-    color: '#7ed6f7',
-    fontWeight: 'bold',
-    fontSize: 14,
-    padding: 4,
-  },
-  recentKeyword: {
-    color: '#4b8cff',
-    fontWeight: 'bold',
-    fontSize: 16,
-    height: 36,
-    lineHeight: 36,
-    marginBottom: 4,
-    borderRadius: 8,
-    paddingLeft: 4,
   },
   noResultWrapper: {
     flex: 1,
