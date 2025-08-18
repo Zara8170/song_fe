@@ -82,6 +82,14 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def isHermesEnabled = (
+    (project.ext.has('react') && project.ext.react?.get('enableHermes') != null)
+        ? project.ext.react.get('enableHermes')
+        : (project.findProperty('hermesEnabled') ?: project.findProperty('reactNativeHermesEnabled') ?: true)
+).toString().toBoolean()
+
+project.ext.hermesEnabled = isHermesEnabled
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     compileSdk rootProject.ext.compileSdkVersion
@@ -132,7 +140,7 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
-    if (hermesEnabled.toBoolean()) {
+    if (isHermesEnabled) {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
