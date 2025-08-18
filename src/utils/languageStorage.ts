@@ -1,18 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type TitleLanguage = 'japanese' | 'korean'; // 한자 | 한글
-export type ArtistLanguage = 'english' | 'korean'; // 영어 | 한글
 
 export interface LanguageSettings {
   titleLanguage: TitleLanguage;
-  artistLanguage: ArtistLanguage;
 }
 
 const LANGUAGE_SETTINGS_KEY = 'language_settings';
 
 const defaultSettings: LanguageSettings = {
   titleLanguage: 'korean', // 기본값: 한글
-  artistLanguage: 'korean', // 기본값: 한글
 };
 
 export const saveLanguageSettings = async (

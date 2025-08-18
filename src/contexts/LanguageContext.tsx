@@ -8,16 +8,13 @@ import React, {
 import {
   LanguageSettings,
   TitleLanguage,
-  ArtistLanguage,
   loadLanguageSettings,
   saveLanguageSettings,
 } from '../utils/languageStorage';
 
 interface LanguageContextType {
   titleLanguage: TitleLanguage;
-  artistLanguage: ArtistLanguage;
   setTitleLanguage: (language: TitleLanguage) => Promise<void>;
-  setArtistLanguage: (language: ArtistLanguage) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -34,8 +31,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 }) => {
   const [titleLanguage, setTitleLanguageState] =
     useState<TitleLanguage>('korean');
-  const [artistLanguage, setArtistLanguageState] =
-    useState<ArtistLanguage>('korean');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +41,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     try {
       const settings = await loadLanguageSettings();
       setTitleLanguageState(settings.titleLanguage);
-      setArtistLanguageState(settings.artistLanguage);
     } catch (error) {
       console.error('Failed to load language settings:', error);
     } finally {
@@ -58,7 +52,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     try {
       const newSettings: LanguageSettings = {
         titleLanguage: language,
-        artistLanguage,
       };
       await saveLanguageSettings(newSettings);
       setTitleLanguageState(language);
@@ -68,27 +61,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     }
   };
 
-  const setArtistLanguage = async (language: ArtistLanguage) => {
-    try {
-      const newSettings: LanguageSettings = {
-        titleLanguage,
-        artistLanguage: language,
-      };
-      await saveLanguageSettings(newSettings);
-      setArtistLanguageState(language);
-    } catch (error) {
-      console.error('Failed to save artist language:', error);
-      throw error;
-    }
-  };
-
   return (
     <LanguageContext.Provider
       value={{
         titleLanguage,
-        artistLanguage,
         setTitleLanguage,
-        setArtistLanguage,
         isLoading,
       }}
     >

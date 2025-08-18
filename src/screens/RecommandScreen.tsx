@@ -20,6 +20,7 @@ import {
 import styles from './RecommandScreenStyles';
 import { useFavorites } from '../hooks/FavoritesContext';
 import { useToast } from '../contexts/ToastContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -30,6 +31,7 @@ const RecommandScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { showToast } = useToast();
+  const { titleLanguage } = useLanguage();
 
   const quickPickListRef = useRef<FlatList>(null);
   const themeListRefs = useRef<{ [key: number]: FlatList | null }>({});
@@ -165,7 +167,9 @@ const RecommandScreen = () => {
         <TouchableOpacity key={songIndex} style={styles.themeSongCard}>
           <View style={styles.themeSongInfo}>
             <Text style={styles.themeSongTitle} numberOfLines={1}>
-              {song.title_jp || song.title_en}
+              {titleLanguage === 'korean'
+                ? song.title_kr
+                : song.title_jp || song.title_en}
             </Text>
             {song.title_yomi && (
               <Text style={styles.themeSongYomi} numberOfLines={1}>
@@ -173,7 +177,7 @@ const RecommandScreen = () => {
               </Text>
             )}
             <Text style={styles.themeSongArtist} numberOfLines={1}>
-              {song.artist || song.artist_kr}
+              {titleLanguage === 'korean' ? song.artist_kr : song.artist}
             </Text>
           </View>
           <View style={styles.themeKaraokeCodes}>
@@ -192,7 +196,9 @@ const RecommandScreen = () => {
   const renderThemeGroupSong = ({ item }: { item: RecommendationSong }) => (
     <TouchableOpacity style={styles.quickPickCard}>
       <Text style={styles.songTitle} numberOfLines={2}>
-        {item.title_jp || item.title_en}
+        {titleLanguage === 'korean'
+          ? item.title_kr
+          : item.title_jp || item.title_en}
       </Text>
       {item.title_yomi && (
         <Text style={styles.songYomi} numberOfLines={1}>
@@ -200,7 +206,7 @@ const RecommandScreen = () => {
         </Text>
       )}
       <Text style={styles.artistName} numberOfLines={1}>
-        {item.artist || item.artist_kr}
+        {titleLanguage === 'korean' ? item.artist_kr : item.artist}
       </Text>
       <View style={styles.karaokeCodes}>
         {item.tj_number && (

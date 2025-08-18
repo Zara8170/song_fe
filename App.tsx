@@ -18,6 +18,7 @@ import { FavoritesProvider } from './src/hooks/FavoritesContext';
 import { ToastProvider } from './src/contexts/ToastContext';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { LanguageProvider } from './src/contexts/LanguageContext';
+import LanguageToggleHeader from './src/components/LanguageToggleHeader';
 import { refreshAccessToken } from './src/api/auth';
 import { getAccessToken } from './src/utils/tokenStorage';
 
@@ -110,7 +111,17 @@ const App = () => {
                           name="SearchTab"
                           component={SearchScreen}
                           options={{
-                            headerShown: false,
+                            headerShown: true,
+                            headerTitle: '노래검색',
+                            headerStyle: {
+                              backgroundColor: '#23292e',
+                            },
+                            headerTintColor: '#fff',
+                            headerTitleStyle: {
+                              fontWeight: 'bold',
+                              fontSize: 20,
+                            },
+                            headerRight: () => <LanguageToggleHeader />,
                           }}
                         />
                         <Stack.Screen
@@ -141,6 +152,7 @@ const App = () => {
                             headerTitleStyle: {
                               fontWeight: 'bold',
                             },
+                            headerRight: () => <LanguageToggleHeader />,
                           }}
                         />
                         <Stack.Screen

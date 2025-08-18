@@ -22,7 +22,6 @@ import SearchTypeDropdown, {
 } from '../components/SearchTypeDropdown';
 import styles from './SearchScreen.styles';
 import { useToast } from '../contexts/ToastContext';
-import { useLanguage } from '../contexts/LanguageContext';
 
 const PAGE_SIZE = 20;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -57,8 +56,6 @@ const SearchScreen = () => {
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevQueryRef = useRef('');
   const { showToast } = useToast();
-  const { titleLanguage, artistLanguage, setTitleLanguage, setArtistLanguage } =
-    useLanguage();
 
   const loadAllSongs = useCallback(async () => {
     if (isFetchingRef.current || !hasMore) return;
@@ -253,25 +250,6 @@ const SearchScreen = () => {
     setShowSearchTypeDropdown(true);
   };
 
-  const toggleLanguage = async () => {
-    try {
-      // 제목과 가수 언어를 동시에 토글
-      if (titleLanguage === 'korean' && artistLanguage === 'korean') {
-        // 현재 한글이면 → 일본어(한자) + 영어로 변경
-        await setTitleLanguage('japanese');
-        await setArtistLanguage('english');
-        showToast('언어가 한자/영어로 변경되었습니다.');
-      } else {
-        // 현재 일본어/영어이면 → 한글로 변경
-        await setTitleLanguage('korean');
-        await setArtistLanguage('korean');
-        showToast('언어가 한글로 변경되었습니다.');
-      }
-    } catch (error) {
-      showToast('언어 변경에 실패했습니다.');
-    }
-  };
-
   const currentData = hasSearched && query.trim() ? searchResults : allSongs;
 
   const filteredData = Array.isArray(currentData)
@@ -292,24 +270,6 @@ const SearchScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#23292e" />
-
-      {/* 커스텀 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>노래검색</Text>
-        <TouchableOpacity
-          style={styles.headerLanguageToggle}
-          onPress={toggleLanguage}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityLabel="언어 변경"
-          accessibilityRole="button"
-        >
-          <Text style={styles.headerLanguageText}>
-            {titleLanguage === 'korean' && artistLanguage === 'korean'
-              ? '한'
-              : '漢'}
-          </Text>
-        </TouchableOpacity>
-      </View>
 
       {/* 검색바 */}
       <View style={styles.searchBoxWrapper}>
@@ -398,7 +358,20 @@ const SearchScreen = () => {
             <Text
               style={[
                 styles.tabText,
-                filter === type ? styles.tabTextActive : styles.tabTextInactive,
+                filter === type
+                  ? [
+                      styles.tabTextActive,
+                      {
+                        backgroundColor: type === 'TJ' ? '#FF5703' : '#EB431E',
+                      },
+                    ]
+                  : [
+                      styles.tabTextInactive,
+                      {
+                        backgroundColor: type === 'TJ' ? '#FF5703' : '#EB431E',
+                        opacity: 0.3,
+                      },
+                    ],
               ]}
             >
               {type}

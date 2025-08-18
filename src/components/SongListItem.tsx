@@ -32,7 +32,7 @@ const SongListItem: React.FC<SongListItemProps> = ({
 }) => {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { showToast } = useToast();
-  const { titleLanguage, artistLanguage } = useLanguage();
+  const { titleLanguage } = useLanguage();
 
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -182,8 +182,8 @@ const SongListItem: React.FC<SongListItemProps> = ({
   const mainTitle =
     titleLanguage === 'korean' ? item.title_kr : item.title_jp || item.title_en;
 
-  // 언어 설정에 따른 가수명 선택
-  const subTitle = artistLanguage === 'korean' ? item.artist_kr : item.artist;
+  // 언어 설정에 따른 가수명 선택 (한글이면 artist_kr, 한자면 artist)
+  const subTitle = titleLanguage === 'korean' ? item.artist_kr : item.artist;
 
   const renderPlaylistItem = ({ item: playlist }: { item: Playlist }) => {
     return (

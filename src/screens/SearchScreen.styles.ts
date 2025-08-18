@@ -5,35 +5,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#23292e',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2c3540',
-    backgroundColor: '#23292e',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  headerLanguageToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#2d3436',
-    borderRadius: 16,
-    minWidth: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerLanguageText: {
-    color: '#7ed6f7',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+
   searchBoxWrapper: {
     paddingHorizontal: 12,
     marginTop: 16,
@@ -96,21 +68,18 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontWeight: 'bold',
-    fontSize: 15,
-    paddingVertical: 8,
-    borderRadius: 16,
-    paddingHorizontal: 18,
+    fontSize: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    paddingHorizontal: 24,
     overflow: 'hidden',
   },
   tabTextActive: {
     color: '#fff',
-    backgroundColor: '#3500CC',
     opacity: 1,
   },
   tabTextInactive: {
-    color: '#aaa',
-    backgroundColor: '#3500CC',
-    opacity: 0.4,
+    color: '#fff',
   },
   // MainScreen에서 가져온 리스트 스타일들
   list: {

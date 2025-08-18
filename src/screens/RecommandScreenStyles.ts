@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginRight: 12,
     width: screenWidth * 0.75,
-    minHeight: 140,
+    height: 160,
     justifyContent: 'center',
   },
   songTitle: {
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   karaokeCodeKY: {
-    backgroundColor: '#3500CC',
+    backgroundColor: '#EB431E',
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
@@ -152,6 +152,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: 100,
   },
   themeSongInfo: {
     flex: 1,
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   themeKaraokeCodeKY: {
-    backgroundColor: '#3500CC',
+    backgroundColor: '#EB431E',
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
