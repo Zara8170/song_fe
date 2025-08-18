@@ -16,22 +16,18 @@ import { searchSongs, fetchSongs, Song } from '../api/song';
 import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SongListItem from '../components/SongListItem';
-// import TopButton from '../components/TopButton';
+
 import SearchTypeDropdown, {
   SearchTargetType,
 } from '../components/SearchTypeDropdown';
 import styles from './SearchScreen.styles';
 import { useToast } from '../contexts/ToastContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const PAGE_SIZE = 20;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const TAB_TYPES = ['ALL', 'TJ', 'KY'] as const;
+const TAB_TYPES = ['TJ', 'KY'] as const;
 type TabType = (typeof TAB_TYPES)[number];
-const TAB_LABELS: Record<TabType, string> = {
-  ALL: 'TJ/KY',
-  TJ: 'TJ',
-  KY: 'KY',
-};
 
 const SEARCH_TYPE_LABELS: Record<SearchTargetType, string> = {
   ALL: '통합',
@@ -47,10 +43,10 @@ const SearchScreen = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [hasSearched, setHasSearched] = useState(false);
-  const [filter, setFilter] = useState<TabType>('ALL');
+  const [filter, setFilter] = useState<TabType>('TJ');
   const [searchPage, setSearchPage] = useState(1);
   const [searchHasMore, setSearchHasMore] = useState(true);
-  // const [showTopButton, setShowTopButton] = useState(false);
+
   const [searchType, setSearchType] = useState<SearchTargetType>('ALL');
   const [showSearchTypeDropdown, setShowSearchTypeDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
@@ -61,6 +57,8 @@ const SearchScreen = () => {
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevQueryRef = useRef('');
   const { showToast } = useToast();
+  const { titleLanguage, artistLanguage, setTitleLanguage, setArtistLanguage } =
+    useLanguage();
 
   const loadAllSongs = useCallback(async () => {
     if (isFetchingRef.current || !hasMore) return;
@@ -250,27 +248,35 @@ const SearchScreen = () => {
     }
   };
 
-  // const handleScroll = (event: any) => {
-  //   const offsetY = event.nativeEvent.contentOffset.y;
-  //   setShowTopButton(offsetY > 100);
-  // };
-
-  // const handlePressTop = () => {
-  //   flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  // };
-
   const handleSearchTypePress = () => {
     setDropdownPosition({ x: 12, y: 65 });
     setShowSearchTypeDropdown(true);
+  };
+
+  const toggleLanguage = async () => {
+    try {
+      // 제목과 가수 언어를 동시에 토글
+      if (titleLanguage === 'korean' && artistLanguage === 'korean') {
+        // 현재 한글이면 → 일본어(한자) + 영어로 변경
+        await setTitleLanguage('japanese');
+        await setArtistLanguage('english');
+        showToast('언어가 한자/영어로 변경되었습니다.');
+      } else {
+        // 현재 일본어/영어이면 → 한글로 변경
+        await setTitleLanguage('korean');
+        await setArtistLanguage('korean');
+        showToast('언어가 한글로 변경되었습니다.');
+      }
+    } catch (error) {
+      showToast('언어 변경에 실패했습니다.');
+    }
   };
 
   const currentData = hasSearched && query.trim() ? searchResults : allSongs;
 
   const filteredData = Array.isArray(currentData)
     ? currentData.filter(song => {
-        if (filter === 'TJ') return !!song.tj_number;
-        if (filter === 'KY') return !!song.ky_number;
-        return true;
+        return filter === 'TJ' ? !!song.tj_number : !!song.ky_number;
       })
     : [];
 
@@ -286,6 +292,24 @@ const SearchScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#23292e" />
+
+      {/* 커스텀 헤더 */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>노래검색</Text>
+        <TouchableOpacity
+          style={styles.headerLanguageToggle}
+          onPress={toggleLanguage}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="언어 변경"
+          accessibilityRole="button"
+        >
+          <Text style={styles.headerLanguageText}>
+            {titleLanguage === 'korean' && artistLanguage === 'korean'
+              ? '한'
+              : '漢'}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* 검색바 */}
       <View style={styles.searchBoxWrapper}>
@@ -338,6 +362,7 @@ const SearchScreen = () => {
             }}
             returnKeyType="search"
           />
+
           {query.length > 0 && (
             <TouchableOpacity
               style={styles.clearButton}
@@ -376,7 +401,7 @@ const SearchScreen = () => {
                 filter === type ? styles.tabTextActive : styles.tabTextInactive,
               ]}
             >
-              {TAB_LABELS[type]}
+              {type}
             </Text>
           </TouchableOpacity>
         ))}
@@ -392,8 +417,6 @@ const SearchScreen = () => {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.1}
         onContentSizeChange={handleContentSizeChange}
-        // onScroll={handleScroll}
-        // scrollEventThrottle={16}
         ListFooterComponent={
           loading ? (
             <View style={styles.loadingContainer}>
@@ -413,9 +436,6 @@ const SearchScreen = () => {
             <Text style={styles.noResultText}>검색 결과가 없습니다.</Text>
           </View>
         )}
-
-      {/* 맨 위로 버튼 */}
-      {/* <TopButton visible={showTopButton} onPress={handlePressTop} /> */}
 
       {/* 검색 타입 선택 드롭다운 */}
       <SearchTypeDropdown

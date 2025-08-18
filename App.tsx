@@ -110,15 +110,7 @@ const App = () => {
                           name="SearchTab"
                           component={SearchScreen}
                           options={{
-                            headerShown: true,
-                            headerTitle: '노래검색',
-                            headerStyle: {
-                              backgroundColor: '#23292e',
-                            },
-                            headerTintColor: '#fff',
-                            headerTitleStyle: {
-                              fontWeight: 'bold',
-                            },
+                            headerShown: false,
                           }}
                         />
                         <Stack.Screen

@@ -33,9 +33,9 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
   const [titleLanguage, setTitleLanguageState] =
-    useState<TitleLanguage>('japanese');
+    useState<TitleLanguage>('korean');
   const [artistLanguage, setArtistLanguageState] =
-    useState<ArtistLanguage>('english');
+    useState<ArtistLanguage>('korean');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

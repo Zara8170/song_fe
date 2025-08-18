@@ -11,8 +11,8 @@ export interface LanguageSettings {
 const LANGUAGE_SETTINGS_KEY = 'language_settings';
 
 const defaultSettings: LanguageSettings = {
-  titleLanguage: 'japanese', // 기본값: 한자 (기존 그대로)
-  artistLanguage: 'english', // 기본값: 영어 (기존 그대로)
+  titleLanguage: 'korean', // 기본값: 한글
+  artistLanguage: 'korean', // 기본값: 한글
 };
 
 export const saveLanguageSettings = async (
