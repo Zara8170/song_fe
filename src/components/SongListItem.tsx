@@ -178,12 +178,13 @@ const SongListItem: React.FC<SongListItemProps> = ({
   const shouldShowTJ = showFilter === 'ALL' || showFilter === 'TJ';
   const shouldShowKY = showFilter === 'ALL' || showFilter === 'KY';
 
-  // 언어 설정에 따른 제목 선택
   const mainTitle =
     titleLanguage === 'korean' ? item.title_kr : item.title_jp || item.title_en;
 
-  // 언어 설정에 따른 가수명 선택 (한글이면 artist_kr, 한자면 artist)
-  const subTitle = titleLanguage === 'korean' ? item.artist_kr : item.artist;
+  const subTitle =
+    titleLanguage === 'korean'
+      ? `${item.artist_kr} (${item.artist})`
+      : item.artist;
 
   const renderPlaylistItem = ({ item: playlist }: { item: Playlist }) => {
     return (
@@ -240,7 +241,12 @@ const SongListItem: React.FC<SongListItemProps> = ({
         <Text style={styles.songTitle} numberOfLines={1} ellipsizeMode="tail">
           {mainTitle}
         </Text>
-        {item.title_yomi && (
+        {titleLanguage === 'korean' && item.title_en && (
+          <Text style={styles.songYomi} numberOfLines={1} ellipsizeMode="tail">
+            {item.title_en}
+          </Text>
+        )}
+        {item.title_yomi && titleLanguage === 'japanese' && (
           <Text style={styles.songYomi} numberOfLines={1} ellipsizeMode="tail">
             {item.title_yomi}
           </Text>

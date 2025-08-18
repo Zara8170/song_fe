@@ -171,13 +171,20 @@ const RecommandScreen = () => {
                 ? song.title_kr
                 : song.title_jp || song.title_en}
             </Text>
-            {song.title_yomi && (
+            {titleLanguage === 'korean' && song.title_en && (
+              <Text style={styles.themeSongYomi} numberOfLines={1}>
+                {song.title_en}
+              </Text>
+            )}
+            {song.title_yomi && titleLanguage === 'japanese' && (
               <Text style={styles.themeSongYomi} numberOfLines={1}>
                 {song.title_yomi}
               </Text>
             )}
             <Text style={styles.themeSongArtist} numberOfLines={1}>
-              {titleLanguage === 'korean' ? song.artist_kr : song.artist}
+              {titleLanguage === 'korean'
+                ? `${song.artist_kr} (${song.artist})`
+                : song.artist}
             </Text>
           </View>
           <View style={styles.themeKaraokeCodes}>
@@ -200,13 +207,20 @@ const RecommandScreen = () => {
           ? item.title_kr
           : item.title_jp || item.title_en}
       </Text>
-      {item.title_yomi && (
+      {titleLanguage === 'korean' && item.title_en && (
+        <Text style={styles.songYomi} numberOfLines={1}>
+          {item.title_en}
+        </Text>
+      )}
+      {item.title_yomi && titleLanguage === 'japanese' && (
         <Text style={styles.songYomi} numberOfLines={1}>
           {item.title_yomi}
         </Text>
       )}
       <Text style={styles.artistName} numberOfLines={1}>
-        {titleLanguage === 'korean' ? item.artist_kr : item.artist}
+        {titleLanguage === 'korean'
+          ? `${item.artist_kr} (${item.artist})`
+          : item.artist}
       </Text>
       <View style={styles.karaokeCodes}>
         {item.tj_number && (

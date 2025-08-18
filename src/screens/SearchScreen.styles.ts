@@ -69,9 +69,9 @@ const styles = StyleSheet.create({
   tabText: {
     fontWeight: 'bold',
     fontSize: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    paddingHorizontal: 36,
     overflow: 'hidden',
   },
   tabTextActive: {
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   tabTextInactive: {
     color: '#fff',
   },
-  // MainScreen에서 가져온 리스트 스타일들
+
   list: {
     flex: 1,
   },
