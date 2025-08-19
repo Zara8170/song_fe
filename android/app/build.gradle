@@ -1,10 +1,10 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
-
-import java.util.Properties
-import java.io.FileInputStream
 
 project.ext.env = new Properties()
 def envFile = project.rootProject.file('.env')
@@ -103,7 +103,7 @@ android {
         versionCode = 10
         versionName = "1.0.10"
 
-        buildConfigField "String", "API_BASE_URL", "\"${project.ext.env.API_BASE_URL}\""
+        buildConfigField "String", "API_BASE_URL", ""${project.ext.env.API_BASE_URL}""
     }
 
     signingConfigs {

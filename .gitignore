@@ -81,3 +81,5 @@ yarn-error.log
 /android/app/google-services.json
 
 /android/gradle.properties
+
+/android/app/my-upload-key.keystore
