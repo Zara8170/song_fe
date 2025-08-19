@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
     textAlign: 'center',
   },
   selectedText: {

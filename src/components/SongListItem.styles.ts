@@ -60,12 +60,12 @@ const styles = StyleSheet.create({
   },
   tjText: {
     color: '#fff',
-    fontWeight: '400',
+    fontWeight: '500',
     fontSize: 16,
   },
   kyText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '500',
     fontSize: 16,
   },
   actionButtons: {
