@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, AppState } from 'react-native';
+import SplashScreen from 'react-native-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import MainScreen from './src/screens/MainScreen';
 import SearchScreen from './src/screens/SearchScreen';
@@ -13,7 +14,7 @@ import NewSongScreen from './src/screens/NewSongScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import LanguageSettingsScreen from './src/screens/LanguageSettingsScreen';
 import LoginScreen from './src/screens/LoginScreen';
-import SplashScreen from './src/components/SplashScreen';
+
 import { FavoritesProvider } from './src/hooks/FavoritesContext';
 import { ToastProvider } from './src/contexts/ToastContext';
 import { AuthProvider } from './src/contexts/AuthContext';
@@ -24,10 +25,28 @@ import { getAccessToken } from './src/utils/tokenStorage';
 
 const Stack = createStackNavigator();
 
+// 커스텀 테마 설정 - 흰색 화면 방지
+const CustomTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#23292e',
+    card: '#23292e',
+    primary: '#7ed6f7',
+  },
+};
+
+const appStyles = {
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#23292e' },
+};
+
+const HeaderRight = () => <LanguageToggleHeader />;
+
 const App = () => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [tokenRefreshing, setTokenRefreshing] = useState(false);
+  const [_tokenRefreshing, setTokenRefreshing] = useState(false);
 
   const handleLogout = async () => {
     setLoggedIn(false);
@@ -60,6 +79,8 @@ const App = () => {
     } finally {
       setLoading(false);
       setTokenRefreshing(false);
+      // 로딩 완료 후 스플래시 스크린 숨기기
+      SplashScreen.hide();
     }
   };
 
@@ -77,22 +98,20 @@ const App = () => {
     };
   }, []);
 
-  if (loading) {
-    return <SplashScreen loading={tokenRefreshing} />;
-  }
+  // 네이티브 스플래시 스크린 사용으로 인해 별도 로딩 화면 불필요
 
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={appStyles.flex}>
         <ToastProvider>
-          {!loggedIn ? (
+          {loading ? null : !loggedIn ? (
             <LoginScreen onLoginSuccess={() => setLoggedIn(true)} />
           ) : (
             <AuthProvider logout={handleLogout}>
               <LanguageProvider>
                 <FavoritesProvider>
-                  <View style={{ flex: 1, backgroundColor: '#23292e' }}>
-                    <NavigationContainer>
+                  <View style={appStyles.container}>
+                    <NavigationContainer theme={CustomTheme}>
                       <Stack.Navigator
                         initialRouteName="Main"
                         screenOptions={{
@@ -121,7 +140,7 @@ const App = () => {
                               fontWeight: 'bold',
                               fontSize: 20,
                             },
-                            headerRight: () => <LanguageToggleHeader />,
+                            headerRight: HeaderRight,
                           }}
                         />
                         <Stack.Screen
@@ -152,7 +171,7 @@ const App = () => {
                             headerTitleStyle: {
                               fontWeight: 'bold',
                             },
-                            headerRight: () => <LanguageToggleHeader />,
+                            headerRight: HeaderRight,
                           }}
                         />
                         <Stack.Screen

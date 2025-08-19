@@ -4,4 +4,6 @@
     <color name="white">#FFFFFF</color>
 
     <color name="nav_bar">#111217</color>
+    
+    <color name="splash_background">#23292e</color>
 </resources>

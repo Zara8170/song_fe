@@ -22,6 +22,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     reactNativeFactory = factory
 
     window = UIWindow(frame: UIScreen.main.bounds)
+    // 백그라운드 색상 설정 - 흰색 화면 방지
+    window?.backgroundColor = UIColor(red: 0.137, green: 0.161, blue: 0.180, alpha: 1.0)
 
     factory.startReactNative(
       withModuleName: "song_fe",

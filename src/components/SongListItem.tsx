@@ -226,12 +226,12 @@ const SongListItem: React.FC<SongListItemProps> = ({
       <View style={styles.numberColumn}>
         {shouldShowTJ && item.tj_number ? (
           <View style={styles.tjBox}>
-            <Text style={styles.songTitle}>{item.tj_number}</Text>
+            <Text style={styles.tjText}>{item.tj_number}</Text>
           </View>
         ) : null}
         {shouldShowKY && item.ky_number ? (
           <View style={styles.kyBox}>
-            <Text style={styles.songTitle}>{item.ky_number}</Text>
+            <Text style={styles.kyText}>{item.ky_number}</Text>
           </View>
         ) : null}
       </View>

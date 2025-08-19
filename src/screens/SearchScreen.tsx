@@ -362,13 +362,15 @@ const SearchScreen = () => {
                   ? [
                       styles.tabTextActive,
                       {
-                        backgroundColor: type === 'TJ' ? '#FF5703' : '#EB431E',
+                        backgroundColor: type === 'TJ' ? '#4682B4' : '#EB431E',
+                        color: type === 'TJ' ? '#fff' : '#fff',
                       },
                     ]
                   : [
                       styles.tabTextInactive,
                       {
-                        backgroundColor: type === 'TJ' ? '#FF5703' : '#EB431E',
+                        backgroundColor: type === 'TJ' ? '#4682B4' : '#EB431E',
+                        color: type === 'TJ' ? '#fff' : '#fff',
                         opacity: 0.3,
                       },
                     ],

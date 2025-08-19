@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   karaokeCodeTJ: {
-    backgroundColor: '#FF5703',
+    backgroundColor: '#4682B4',
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   themeKaraokeCodeTJ: {
-    backgroundColor: '#FF5703',
+    backgroundColor: '#4682B4',
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
