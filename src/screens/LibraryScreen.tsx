@@ -14,10 +14,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useFavorites } from '../hooks/FavoritesContext';
 import SongListItem from '../components/SongListItem';
 import PlaylistCreateModal from '../components/PlaylistCreateModal';
+import PlaylistEditModal from '../components/PlaylistEditModal';
 import PlaylistActionSheet from '../components/PlaylistActionSheet';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import PlaylistItem from '../components/PlaylistItem';
 import FloatingActionButton from '../components/FloatingActionButton';
+
 import styles from './LibraryScreen.styles';
 import { Song } from '../api/song';
 import { useToast } from '../contexts/ToastContext';
@@ -27,9 +29,11 @@ import {
   getOrCreateLikedSongsPlaylist,
   getPlaylistSongs,
   createPlaylist,
+  updatePlaylist,
   deletePlaylist,
   removeSongFromPlaylist,
   PlaylistCreateDTO,
+  PlaylistUpdateDTO,
 } from '../api/playlist';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -50,6 +54,11 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
   const [newPlaylistTitle, setNewPlaylistTitle] = useState('');
   const [newPlaylistDescription, setNewPlaylistDescription] = useState('');
   const [creating, setCreating] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editPlaylistTitle, setEditPlaylistTitle] = useState('');
+  const [editPlaylistDescription, setEditPlaylistDescription] = useState('');
+  const [editPlaylistIsPublic, setEditPlaylistIsPublic] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedPlaylistForAction, setSelectedPlaylistForAction] =
     useState<Playlist | null>(null);
@@ -236,6 +245,77 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
     setShowActionSheet(true);
   };
 
+  const openEditModal = () => {
+    if (!selectedPlaylistForAction) return;
+
+    // "좋아요 표시한 음악" 플레이리스트는 수정 불가
+    if (selectedPlaylistForAction.title === '좋아요 표시한 음악') {
+      showToast('좋아요 표시한 음악 플레이리스트는 수정할 수 없습니다.');
+      setShowActionSheet(false);
+      return;
+    }
+
+    setEditPlaylistTitle(selectedPlaylistForAction.title);
+    setEditPlaylistDescription(selectedPlaylistForAction.description || '');
+    setEditPlaylistIsPublic(selectedPlaylistForAction.isPublic);
+    setShowActionSheet(false);
+    setTimeout(() => {
+      setShowEditModal(true);
+    }, 100);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditPlaylistTitle('');
+    setEditPlaylistDescription('');
+    setEditPlaylistIsPublic(false);
+    setSelectedPlaylistForAction(null);
+  };
+
+  const handleUpdatePlaylist = async () => {
+    if (!selectedPlaylistForAction || !editPlaylistTitle.trim()) {
+      Alert.alert('오류', '플레이리스트 제목을 입력해주세요.');
+      return;
+    }
+
+    if (editPlaylistTitle.trim() === '좋아요 표시한 음악') {
+      Alert.alert('오류', '이미 사용 중인 플레이리스트 이름입니다.');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const updateData: PlaylistUpdateDTO = {
+        title: editPlaylistTitle.trim(),
+        description: editPlaylistDescription.trim() || undefined,
+        isPublic: editPlaylistIsPublic,
+      };
+
+      await updatePlaylist(selectedPlaylistForAction.playlistId, updateData);
+      showToast('플레이리스트가 수정되었습니다.');
+
+      // 현재 선택된 플레이리스트가 수정된 플레이리스트라면 업데이트
+      if (
+        selectedPlaylist?.playlistId === selectedPlaylistForAction.playlistId
+      ) {
+        setSelectedPlaylist({
+          ...selectedPlaylist,
+          title: editPlaylistTitle.trim(),
+          description: editPlaylistDescription.trim() || undefined,
+          isPublic: editPlaylistIsPublic,
+        });
+      }
+
+      await loadPlaylists();
+      closeEditModal();
+    } catch (error) {
+      console.error('Failed to update playlist:', error);
+      showToast('플레이리스트 수정에 실패했습니다.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const closeActionSheet = () => {
     setShowActionSheet(false);
     setSelectedPlaylistForAction(null);
@@ -343,7 +423,6 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
     useCallback(() => {
       setSelectedPlaylist(null);
       setPlaylistSongs([]);
-      // 화면에 포커스가 올 때마다 플레이리스트 목록 새로고침 (songCount 업데이트)
       loadPlaylists();
     }, [loadPlaylists]),
   );
@@ -447,10 +526,25 @@ const LibraryScreen: React.FC<LibraryScreenProps> = ({ navigation }) => {
           creating={creating}
         />
 
+        {/* 플레이리스트 수정 모달 */}
+        <PlaylistEditModal
+          visible={showEditModal}
+          onClose={closeEditModal}
+          onConfirm={handleUpdatePlaylist}
+          title={editPlaylistTitle}
+          onTitleChange={setEditPlaylistTitle}
+          description={editPlaylistDescription}
+          onDescriptionChange={setEditPlaylistDescription}
+          isPublic={editPlaylistIsPublic}
+          onIsPublicChange={setEditPlaylistIsPublic}
+          updating={updating}
+        />
+
         {/* 플레이리스트 액션시트 */}
         <PlaylistActionSheet
           visible={showActionSheet}
           onClose={closeActionSheet}
+          onEdit={openEditModal}
           onDelete={handleDeletePlaylist}
           playlist={selectedPlaylistForAction}
           deleting={deleting}

@@ -156,6 +156,7 @@ const App = () => {
                             headerTitleStyle: {
                               fontWeight: 'bold',
                             },
+                            headerRight: HeaderRight,
                           }}
                         />
                         <Stack.Screen

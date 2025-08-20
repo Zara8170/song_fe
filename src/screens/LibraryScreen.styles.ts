@@ -10,6 +10,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    marginBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#3a4147',
   },
@@ -236,6 +237,11 @@ export default StyleSheet.create({
     marginBottom: 0,
   },
 
+  actionSheetButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
   actionSheetDeleteText: {
     fontSize: 16,
     color: '#ff4444',

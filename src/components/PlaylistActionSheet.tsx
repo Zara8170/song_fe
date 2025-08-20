@@ -8,6 +8,7 @@ import BaseModal from './BaseModal';
 interface PlaylistActionSheetProps {
   visible: boolean;
   onClose: () => void;
+  onEdit: () => void;
   onDelete: () => void;
   playlist: Playlist | null;
   deleting: boolean;
@@ -16,6 +17,7 @@ interface PlaylistActionSheetProps {
 const PlaylistActionSheet: React.FC<PlaylistActionSheetProps> = ({
   visible,
   onClose,
+  onEdit,
   onDelete,
   playlist,
   deleting,
@@ -39,6 +41,15 @@ const PlaylistActionSheet: React.FC<PlaylistActionSheetProps> = ({
           <Text style={styles.actionSheetTitle}>{playlist?.title}</Text>
         </View>
       </View>
+
+      <TouchableOpacity
+        style={styles.actionSheetButton}
+        onPress={onEdit}
+        disabled={deleting}
+      >
+        <Ionicons name="create-outline" size={20} color="#7ed6f7" />
+        <Text style={styles.actionSheetButtonText}>플레이리스트 수정</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.actionSheetButton}

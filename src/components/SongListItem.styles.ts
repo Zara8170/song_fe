@@ -9,6 +9,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 8,
     height: 100,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3a4147',
   },
   numberColumn: {
     flexDirection: 'column',

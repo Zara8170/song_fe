@@ -32,6 +32,7 @@ const SEARCH_TYPE_LABELS: Record<SearchTargetType, string> = {
   ALL: '통합',
   TITLE: '제목',
   ARTIST: '가수',
+  ANIME: '애니메이션',
 };
 
 const SearchScreen = () => {
@@ -294,10 +295,12 @@ const SearchScreen = () => {
             style={styles.searchInput}
             placeholder={
               searchType === 'ALL'
-                ? '곡명, 가수로 검색하세요'
+                ? '곡명, 가수, 애니메이션명으로 검색하세요'
                 : searchType === 'TITLE'
                 ? '곡명으로 검색하세요'
-                : '가수명으로 검색하세요'
+                : searchType === 'ARTIST'
+                ? '가수명으로 검색하세요'
+                : '애니명, 드라마명, 영화명으로 검색하세요'
             }
             placeholderTextColor="#aaa"
             value={query}

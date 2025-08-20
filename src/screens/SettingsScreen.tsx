@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { deleteMember } from '../api/auth';
@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { GOOGLE_WEB_CLIENT_ID } from '@env';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
 interface SettingsScreenProps {
   navigation: any;
@@ -16,6 +17,8 @@ interface SettingsScreenProps {
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   const { showToast } = useToast();
   const { logout } = useAuth();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -42,6 +45,29 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
       } catch (storageError) {
         showToast('로그아웃 중 오류가 발생했습니다.');
       }
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteMember();
+
+      const hasPlayServices = await GoogleSignin.hasPlayServices();
+      if (hasPlayServices) {
+        await GoogleSignin.signOut();
+      }
+
+      await AsyncStorage.removeItem('token');
+
+      showToast('회원 탈퇴가 완료되었습니다.');
+      logout();
+    } catch (error) {
+      console.error('회원 탈퇴 에러:', error);
+      showToast('회원 탈퇴 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -81,24 +107,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.menuItem, styles.lastMenuItem]}
-            onPress={async () => {
-              try {
-                await deleteMember();
-
-                const hasPlayServices = await GoogleSignin.hasPlayServices();
-                if (hasPlayServices) {
-                  await GoogleSignin.signOut();
-                }
-
-                await AsyncStorage.removeItem('token');
-
-                showToast('회원 탈퇴가 완료되었습니다.');
-                logout();
-              } catch (error) {
-                console.error('회원 탈퇴 에러:', error);
-                showToast('회원 탈퇴 중 오류가 발생했습니다.');
-              }
-            }}
+            onPress={() => setShowDeleteModal(true)}
           >
             <Ionicons name="person-remove-outline" size={24} color="#ff6b6b" />
             <Text style={styles.menuText}>회원탈퇴</Text>
@@ -109,6 +118,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
           {/* 여기에 다른 메뉴 항목들이 추가될 수 있습니다 */}
         </View>
       </View>
+
+      <DeleteConfirmModal
+        visible={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        title="회원 탈퇴"
+        message="정말 탈퇴하시겠습니까?"
+        confirmText="탈퇴"
+        cancelText="취소"
+        loading={isDeleting}
+      />
     </View>
   );
 };

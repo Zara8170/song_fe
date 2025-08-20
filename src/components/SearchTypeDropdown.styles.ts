@@ -14,7 +14,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#363c44',
     borderRadius: 8,
     paddingVertical: 4,
-    minWidth: 150,
+    minWidth: 190,
+    maxWidth: 220,
     zIndex: 999,
     elevation: 8,
     shadowColor: '#000',
@@ -30,9 +31,10 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     backgroundColor: 'transparent',
+    minHeight: 48,
   },
   optionSelected: {
     backgroundColor: 'rgba(126, 214, 247, 0.1)',
@@ -50,8 +52,10 @@ const styles = StyleSheet.create({
   },
   optionText: {
     color: '#aaa',
-    fontSize: 14,
+    fontSize: 13,
     flex: 1,
+    lineHeight: 18,
+    flexWrap: 'wrap',
   },
   optionTextSelected: {
     color: '#7ed6f7',
