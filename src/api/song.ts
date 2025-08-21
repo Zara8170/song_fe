@@ -56,29 +56,33 @@ export interface RecommendationResponse {
   candidates: RecommendationCandidate[];
 }
 
-// New: Async job API types
-export type RecommendationJobStatusType =
-  | 'queued'
-  | 'running'
-  | 'succeeded'
-  | 'failed'
-  | 'canceled';
-
-export interface RecommendationJobCreateResponse {
-  jobId: string;
-  status: RecommendationJobStatusType;
-  statusUrl?: string;
+export interface CachedRecommendationSong {
+  id: number;
+  title: string;
+  artist: string;
+  similarity_score?: number;
+  score?: number;
+  reason?: string;
 }
 
-export interface RecommendationJobStatusResponse {
-  jobId: string;
-  status: RecommendationJobStatusType;
-  progress?: number;
-  submittedAt?: string;
-  startedAt?: string;
-  finishedAt?: string;
-  result?: RecommendationResponse;
-  error?: { code: string; message: string; details?: Record<string, unknown> };
+export interface CachedRecommendationGroup {
+  name: string;
+  songs: CachedRecommendationSong[];
+}
+
+export interface CachedRecommendationResponse {
+  favorite_song_ids: number[];
+  groups: CachedRecommendationGroup[];
+  candidates: CachedRecommendationSong[];
+  generated_date: string;
+  cached: boolean;
+}
+
+// 요청 상태 응답 타입
+export interface RecommendationStatusResponse {
+  status: string;
+  message: string;
+  generatedDate: string;
 }
 
 export async function fetchSongs(
@@ -117,103 +121,45 @@ export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
   return res.json();
 }
 
-// New: Create recommendation job (202 Accepted expected)
-export async function createRecommendationJob(
+// 새로운 비동기 추천 요청 API
+export const requestRecommendation = async (
   favoriteSongIds: number[],
-  options?: {
-    strategy?: 'default' | 'fast' | 'deep';
-    top_k?: number;
-    locale?: 'ko' | 'ja' | 'en';
-    source?: 'login' | 'manual';
-  },
-): Promise<RecommendationJobCreateResponse> {
-  const body = {
-    favorite_song_ids: favoriteSongIds,
-    strategy: options?.strategy ?? 'default',
-    top_k: options?.top_k ?? 50,
-    locale: options?.locale,
-    source: options?.source ?? 'manual',
+): Promise<RecommendationStatusResponse> => {
+  const requestBody = {
+    favoriteSongIds: favoriteSongIds,
   };
 
-  const res = await fetchWithAuth(`/api/recommendation/jobs`, {
+  const res = await fetchWithAuth('/api/recommendation/request', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
   });
 
   if (!res.ok) {
-    // surface server-side error
-    const text = await res.text();
-    throw new Error(
-      `Failed to create recommendation job: ${res.status} ${text}`,
-    );
+    throw new Error(`HTTP error! status: ${res.status}`);
   }
 
   return res.json();
-}
+};
 
-// New: Get recommendation job status (and result if succeeded)
-export async function getRecommendationJobStatus(
-  jobId: string,
-): Promise<RecommendationJobStatusResponse> {
-  const res = await fetchWithAuth(`/api/recommendation/jobs/${jobId}`);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Failed to fetch job status: ${res.status} ${text}`);
-  }
-  return res.json();
-}
-
-// New: Fetch latest recommendation for current member
-export async function fetchLatestRecommendation(): Promise<RecommendationResponse | null> {
-  const res = await fetchWithAuth(`/api/recommendation/latest`);
-  if (res.status === 204) {
-    return null;
-  }
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(
-      `Failed to fetch latest recommendation: ${res.status} ${text}`,
-    );
-  }
-  return res.json();
-}
-
-export const requestRecommendation = async (
-  favoriteSongIds: number[],
-): Promise<RecommendationResponse> => {
-  const requestBody = {
-    favorite_song_ids: favoriteSongIds,
-  };
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-  try {
-    const res = await fetchWithAuth('/api/recommendation/request', {
+// 캐시된 추천 결과 조회 API
+export const getCachedRecommendation =
+  async (): Promise<CachedRecommendationResponse> => {
+    const res = await fetchWithAuth('/api/recommendation/cached', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
     });
 
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
 
-    const data = await res.json();
-    return data;
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
-      throw new Error('Request timed out after 30 seconds');
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
+    return res.json();
+  };
 
 export async function toggleLike(songId: number) {
   const res = await fetchWithAuth(`/api/likes/songs/${songId}`, {

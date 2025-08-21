@@ -9,105 +9,97 @@ import {
   RefreshControl,
 } from 'react-native';
 import {
-  RecommendationResponse,
-  RecommendationCandidate,
-  RecommendationGroup,
-  RecommendationSong,
-  createRecommendationJob,
-  getRecommendationJobStatus,
-  fetchLatestRecommendation,
+  CachedRecommendationResponse,
+  CachedRecommendationSong,
+  CachedRecommendationGroup,
+  getCachedRecommendation,
+  requestRecommendation,
 } from '../api/song';
 import styles from './RecommandScreenStyles';
 import { useFavorites } from '../hooks/FavoritesContext';
 import { useToast } from '../contexts/ToastContext';
-import { useLanguage } from '../contexts/LanguageContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 const RecommandScreen = () => {
   const { favorites } = useFavorites();
   const [recommendations, setRecommendations] =
-    useState<RecommendationResponse | null>(null);
+    useState<CachedRecommendationResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { showToast } = useToast();
-  const { titleLanguage } = useLanguage();
 
   const quickPickListRef = useRef<FlatList>(null);
   const themeListRefs = useRef<{ [key: number]: FlatList | null }>({});
   const isActiveRef = useRef<boolean>(true);
 
-  const startRecommendationJobAndPoll = useCallback(
-    async (options?: { isRefresh?: boolean; keepSpinner?: boolean }) => {
-      const { isRefresh = false, keepSpinner = false } = options || {};
+  const loadCachedRecommendation = useCallback(
+    async (isRefresh = false) => {
       try {
         if (isRefresh) {
           setIsRefreshing(true);
-        } else if (keepSpinner) {
+        } else {
           setIsLoading(true);
         }
 
-        const favoriteIds = favorites
-          .map(song => song.songId)
-          .filter(id => !Number.isNaN(id));
-
-        const job = await createRecommendationJob(favoriteIds, {
-          source: isRefresh ? 'manual' : 'manual',
-          strategy: 'default',
-        });
-
-        let attempts = 0;
-        const maxAttempts = 30; // ~1분(2s 간격)
-        const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
-
-        while (attempts < maxAttempts) {
-          if (!isActiveRef.current) {
-            return;
-          }
-          attempts += 1;
-          const status = await getRecommendationJobStatus(job.jobId);
-
-          if (status.status === 'succeeded' && status.result) {
-            if (!isActiveRef.current) return;
-            setRecommendations(status.result);
-            if (!isRefresh) setIsLoading(false);
-            setIsRefreshing(false);
-            return;
-          }
-          if (status.status === 'failed') {
-            if (!isActiveRef.current) return;
-            if (!isRefresh) setIsLoading(false);
-            setIsRefreshing(false);
-            showToast(
-              '추천 생성을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.',
-            );
-            return;
-          }
-
-          await delay(2000);
-        }
-
-        // 타임아웃
         if (!isActiveRef.current) return;
-        if (!isRefresh) setIsLoading(false);
-        setIsRefreshing(false);
-        showToast('추천 생성이 지연되고 있습니다. 잠시 후 다시 시도해주세요.');
+
+        console.log('Loading cached recommendation...');
+        const cachedData = await getCachedRecommendation();
+
+        if (!isActiveRef.current) return;
+
+        setRecommendations(cachedData);
+        console.log('Cached recommendation loaded successfully');
       } catch (error: any) {
         if (!isActiveRef.current) return;
-        if (!isRefresh) setIsLoading(false);
-        setIsRefreshing(false);
+
+        console.error('Failed to load cached recommendation:', error);
+
         if (error.message?.includes('사용자 정보를 찾을 수 없습니다')) {
           showToast('사용자 정보가 없습니다. 다시 로그인해주세요.');
+        } else if (error.message?.includes('HTTP error! status: 404')) {
+          showToast('아직 추천 결과가 없습니다. 잠시 후 다시 시도해주세요.');
         } else {
           showToast('추천을 가져오는 데 실패했습니다.');
         }
+      } finally {
+        if (!isActiveRef.current) return;
+        setIsLoading(false);
+        setIsRefreshing(false);
       }
     },
-    [favorites, showToast],
+    [showToast],
   );
 
+  const refreshRecommendation = useCallback(async () => {
+    try {
+      if (!isActiveRef.current) return;
+
+      // 새로운 추천 요청 (백그라운드)
+      const favoriteIds = favorites
+        .map(song => song.songId)
+        .filter(id => !Number.isNaN(id));
+
+      if (favoriteIds.length > 0) {
+        console.log('Requesting new recommendation...');
+        await requestRecommendation(favoriteIds);
+        console.log('New recommendation requested successfully');
+
+        // 새로운 추천 요청 후 캐시된 결과 로드
+        await loadCachedRecommendation(true);
+      } else {
+        showToast('즐겨찾기에 노래를 추가한 후 추천을 받으실 수 있습니다.');
+      }
+    } catch (error: any) {
+      console.error('Failed to refresh recommendation:', error);
+      showToast('추천 갱신에 실패했습니다.');
+      setIsRefreshing(false);
+    }
+  }, [favorites, showToast, loadCachedRecommendation]);
+
   const onRefresh = useCallback(() => {
-    startRecommendationJobAndPoll({ isRefresh: true, keepSpinner: false });
+    refreshRecommendation();
 
     setTimeout(() => {
       quickPickListRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -118,118 +110,76 @@ const RecommandScreen = () => {
         }
       });
     }, 100);
-  }, [startRecommendationJobAndPoll]);
+  }, [refreshRecommendation]);
 
   useEffect(() => {
     isActiveRef.current = true;
-    const bootstrap = async () => {
-      setIsLoading(true);
-      try {
-        const latest = await fetchLatestRecommendation();
-        if (!isActiveRef.current) return;
-        if (latest) {
-          setRecommendations(latest);
-          setIsLoading(false);
-          // 최신 표시 후 백그라운드 갱신
-          startRecommendationJobAndPoll({
-            isRefresh: false,
-            keepSpinner: false,
-          });
-        } else {
-          // 최신 결과가 없으면 스피너 유지하며 생성 + 폴링
-          await startRecommendationJobAndPoll({
-            isRefresh: false,
-            keepSpinner: true,
-          });
-        }
-      } catch (_e) {
-        if (!isActiveRef.current) return;
-        // 최신 불러오기 실패 시 바로 생성 + 폴링으로 폴백
-        await startRecommendationJobAndPoll({
-          isRefresh: false,
-          keepSpinner: true,
-        });
-      }
-    };
-    bootstrap();
+
+    // 화면이 마운트되면 캐시된 추천 결과를 로드
+    loadCachedRecommendation();
+
     return () => {
       isActiveRef.current = false;
     };
-  }, [startRecommendationJobAndPoll]);
+  }, [loadCachedRecommendation]);
 
   const renderQuickPickPage = ({
     item,
   }: {
-    item: RecommendationCandidate[];
+    item: CachedRecommendationSong[];
   }) => (
     <View style={styles.quickPickPage}>
       {item.map((song, songIndex) => (
         <TouchableOpacity key={songIndex} style={styles.themeSongCard}>
           <View style={styles.themeSongInfo}>
             <Text style={styles.themeSongTitle} numberOfLines={1}>
-              {titleLanguage === 'korean'
-                ? song.title_kr
-                : song.title_jp || song.title_en}
+              {song.title}
             </Text>
-            {titleLanguage === 'korean' && song.title_en && (
-              <Text style={styles.themeSongYomi} numberOfLines={1}>
-                {song.title_en}
-              </Text>
-            )}
-            {song.title_yomi && titleLanguage === 'japanese' && (
-              <Text style={styles.themeSongYomi} numberOfLines={1}>
-                {song.title_yomi}
-              </Text>
-            )}
             <Text style={styles.themeSongArtist} numberOfLines={1}>
-              {titleLanguage === 'korean'
-                ? `${song.artist_kr} (${song.artist})`
-                : song.artist}
+              {song.artist}
             </Text>
-          </View>
-          <View style={styles.themeKaraokeCodes}>
-            {song.tj_number && (
-              <Text style={styles.themeKaraokeCodeTJ}>TJ {song.tj_number}</Text>
+            {song.score && (
+              <Text style={styles.themeSongYomi} numberOfLines={1}>
+                추천도: {(song.score * 100).toFixed(0)}%
+              </Text>
             )}
-            {song.ky_number && (
-              <Text style={styles.themeKaraokeCodeKY}>KY {song.ky_number}</Text>
+            {song.similarity_score && (
+              <Text style={styles.themeSongYomi} numberOfLines={1}>
+                유사도: {(song.similarity_score * 100).toFixed(0)}%
+              </Text>
             )}
           </View>
+          {song.reason && (
+            <View style={styles.themeKaraokeCodes}>
+              <Text style={styles.themeKaraokeCodeTJ} numberOfLines={2}>
+                {song.reason}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       ))}
     </View>
   );
 
-  const renderThemeGroupSong = ({ item }: { item: RecommendationSong }) => (
+  const renderThemeGroupSong = ({
+    item,
+  }: {
+    item: CachedRecommendationSong;
+  }) => (
     <TouchableOpacity style={styles.quickPickCard}>
       <Text style={styles.songTitle} numberOfLines={2}>
-        {titleLanguage === 'korean'
-          ? item.title_kr
-          : item.title_jp || item.title_en}
+        {item.title}
       </Text>
-      {titleLanguage === 'korean' && item.title_en && (
-        <Text style={styles.songYomi} numberOfLines={1}>
-          {item.title_en}
-        </Text>
-      )}
-      {item.title_yomi && titleLanguage === 'japanese' && (
-        <Text style={styles.songYomi} numberOfLines={1}>
-          {item.title_yomi}
-        </Text>
-      )}
       <Text style={styles.artistName} numberOfLines={1}>
-        {titleLanguage === 'korean'
-          ? `${item.artist_kr} (${item.artist})`
-          : item.artist}
+        {item.artist}
       </Text>
-      <View style={styles.karaokeCodes}>
-        {item.tj_number && (
-          <Text style={styles.karaokeCodeTJ}>TJ {item.tj_number}</Text>
-        )}
-        {item.ky_number && (
-          <Text style={styles.karaokeCodeKY}>KY {item.ky_number}</Text>
-        )}
-      </View>
+      {item.similarity_score && (
+        <View style={styles.karaokeCodes}>
+          <Text style={styles.karaokeCodeTJ}>
+            유사도: {(item.similarity_score * 100).toFixed(0)}%
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -258,12 +208,7 @@ const RecommandScreen = () => {
         <Text style={styles.errorText}>추천을 불러오지 못했습니다.</Text>
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={() =>
-            startRecommendationJobAndPoll({
-              isRefresh: false,
-              keepSpinner: true,
-            })
-          }
+          onPress={() => loadCachedRecommendation()}
         >
           <Text style={styles.retryButtonText}>다시 시도</Text>
         </TouchableOpacity>
@@ -299,9 +244,9 @@ const RecommandScreen = () => {
       return (
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>테마별 선곡</Text>
-          {item.data.map((group: RecommendationGroup, index: number) => (
+          {item.data.map((group: CachedRecommendationGroup, index: number) => (
             <View key={index} style={styles.themeGroupContainer}>
-              <Text style={styles.themeGroupTitle}>{group.tagline}</Text>
+              <Text style={styles.themeGroupTitle}>{group.name}</Text>
               <FlatList
                 ref={el => {
                   themeListRefs.current[index] = el;
@@ -340,7 +285,7 @@ const RecommandScreen = () => {
           tintColor="#4FC3F7"
         />
       }
-      contentContainerStyle={{ paddingBottom: 20 }}
+      contentContainerStyle={styles.contentContainer}
     />
   );
 };

@@ -211,6 +211,9 @@ const styles = StyleSheet.create({
     minWidth: 45,
     textAlign: 'center',
   },
+  contentContainer: {
+    paddingBottom: 20,
+  },
 });
 
 export default styles;

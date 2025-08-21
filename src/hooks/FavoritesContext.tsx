@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import { Song } from '../api/song';
-import { fetchMyLikes, toggleLike } from '../api/song';
+import { fetchMyLikes, toggleLike, requestRecommendation } from '../api/song';
 import { useToast } from '../contexts/ToastContext';
 import {
   getFavorites,
@@ -50,6 +50,33 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  const requestBackgroundRecommendation = useCallback(
+    async (favoriteList: Song[]) => {
+      try {
+        const favoriteIds = favoriteList
+          .map(song => song.songId)
+          .filter(id => !Number.isNaN(id));
+
+        if (favoriteIds.length === 0) {
+          console.log('No favorite songs to request recommendation');
+          return;
+        }
+
+        console.log(
+          'Requesting background recommendation for',
+          favoriteIds.length,
+          'favorites',
+        );
+        await requestRecommendation(favoriteIds);
+        console.log('Background recommendation request sent successfully');
+      } catch (error) {
+        console.error('Failed to request background recommendation:', error);
+        // 백그라운드 요청이므로 사용자에게 에러를 보여주지 않음
+      }
+    },
+    [],
+  );
+
   const syncWithBackend = useCallback(async () => {
     try {
       setLoading(true);
@@ -57,13 +84,18 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log('Synced favorites from backend:', likedSongs);
       await saveFavorites(likedSongs);
       setFavorites(likedSongs);
+
+      // 즐겨찾기 동기화 완료 후 백그라운드에서 추천 요청
+      if (likedSongs.length > 0) {
+        requestBackgroundRecommendation(likedSongs);
+      }
     } catch (error) {
       console.error('Failed to sync with backend:', error);
       showToast('백엔드와 동기화에 실패했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, requestBackgroundRecommendation]);
 
   useEffect(() => {
     const initializeFavorites = async () => {
