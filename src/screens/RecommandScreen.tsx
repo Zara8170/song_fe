@@ -18,6 +18,7 @@ import {
 import styles from './RecommandScreenStyles';
 import { useFavorites } from '../hooks/FavoritesContext';
 import { useToast } from '../contexts/ToastContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -28,6 +29,7 @@ const RecommandScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { showToast } = useToast();
+  const { titleLanguage } = useLanguage();
 
   const quickPickListRef = useRef<FlatList>(null);
   const themeListRefs = useRef<{ [key: number]: FlatList | null }>({});
@@ -51,6 +53,21 @@ const RecommandScreen = () => {
 
         setRecommendations(cachedData);
         console.log('Cached recommendation loaded successfully');
+        console.log('Groups count:', cachedData.groups.length);
+        console.log(
+          'Groups data:',
+          cachedData.groups.map(g => ({
+            name: g.name,
+            tagline: g.tagline,
+            songsCount: g.songs.length,
+            songs: g.songs.map(s => ({
+              title: s.title,
+              artist: s.artist,
+              tj_number: s.tj_number,
+              ky_number: s.ky_number,
+            })),
+          })),
+        );
       } catch (error: any) {
         if (!isActiveRef.current) return;
 
@@ -115,7 +132,6 @@ const RecommandScreen = () => {
   useEffect(() => {
     isActiveRef.current = true;
 
-    // 화면이 마운트되면 캐시된 추천 결과를 로드
     loadCachedRecommendation();
 
     return () => {
@@ -133,54 +149,29 @@ const RecommandScreen = () => {
         <TouchableOpacity key={songIndex} style={styles.themeSongCard}>
           <View style={styles.themeSongInfo}>
             <Text style={styles.themeSongTitle} numberOfLines={1}>
-              {song.title}
+              {getDisplayTitle(song)}
             </Text>
             <Text style={styles.themeSongArtist} numberOfLines={1}>
-              {song.artist}
+              {getDisplayArtist(song)}
             </Text>
-            {song.score && (
-              <Text style={styles.themeSongYomi} numberOfLines={1}>
-                추천도: {(song.score * 100).toFixed(0)}%
-              </Text>
-            )}
-            {song.similarity_score && (
-              <Text style={styles.themeSongYomi} numberOfLines={1}>
-                유사도: {(song.similarity_score * 100).toFixed(0)}%
-              </Text>
-            )}
           </View>
-          {song.reason && (
+          {(song.tj_number || song.ky_number) && (
             <View style={styles.themeKaraokeCodes}>
-              <Text style={styles.themeKaraokeCodeTJ} numberOfLines={2}>
-                {song.reason}
-              </Text>
+              {song.tj_number && (
+                <Text style={styles.themeKaraokeCodeTJ}>
+                  TJ {song.tj_number}
+                </Text>
+              )}
+              {song.ky_number && (
+                <Text style={styles.themeKaraokeCodeKY}>
+                  KY {song.ky_number}
+                </Text>
+              )}
             </View>
           )}
         </TouchableOpacity>
       ))}
     </View>
-  );
-
-  const renderThemeGroupSong = ({
-    item,
-  }: {
-    item: CachedRecommendationSong;
-  }) => (
-    <TouchableOpacity style={styles.quickPickCard}>
-      <Text style={styles.songTitle} numberOfLines={2}>
-        {item.title}
-      </Text>
-      <Text style={styles.artistName} numberOfLines={1}>
-        {item.artist}
-      </Text>
-      {item.similarity_score && (
-        <View style={styles.karaokeCodes}>
-          <Text style={styles.karaokeCodeTJ}>
-            유사도: {(item.similarity_score * 100).toFixed(0)}%
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
   );
 
   const chunkArray = (array: any[], size: number) => {
@@ -191,7 +182,29 @@ const RecommandScreen = () => {
     return chunks;
   };
 
-  // removed unused renderThemeGroup helper
+  const getRandomItems = (array: any[], count: number) => {
+    if (array.length <= count) return array;
+    const shuffled = [...array].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  };
+
+  // 언어에 따른 제목 표시 함수
+  const getDisplayTitle = (song: CachedRecommendationSong) => {
+    if (titleLanguage === 'korean') {
+      return song.title_kr || song.title_en || song.title_jp || song.title;
+    } else {
+      return song.title_jp || song.title_yomi || song.title_en || song.title;
+    }
+  };
+
+  // 언어에 따른 아티스트 표시 함수
+  const getDisplayArtist = (song: CachedRecommendationSong) => {
+    if (titleLanguage === 'korean') {
+      return song.artist_kr || song.artist;
+    } else {
+      return song.artist || song.artist_kr;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -216,8 +229,11 @@ const RecommandScreen = () => {
     );
   }
 
+  // 후보곡에서 랜덤하게 12개 선택
+  const randomCandidates = getRandomItems(recommendations.candidates, 12);
+
   const contentData = [
-    { type: 'quickPick', data: chunkArray(recommendations.candidates, 4) },
+    { type: 'quickPick', data: chunkArray(randomCandidates, 4) },
     { type: 'themeSection', data: recommendations.groups },
   ];
 
@@ -246,18 +262,49 @@ const RecommandScreen = () => {
           <Text style={styles.sectionTitle}>테마별 선곡</Text>
           {item.data.map((group: CachedRecommendationGroup, index: number) => (
             <View key={index} style={styles.themeGroupContainer}>
-              <Text style={styles.themeGroupTitle}>{group.name}</Text>
+              {group.tagline && (
+                <Text style={styles.themeGroupTagline}>{group.tagline}</Text>
+              )}
               <FlatList
                 ref={el => {
                   themeListRefs.current[index] = el;
                 }}
                 data={group.songs}
-                renderItem={renderThemeGroupSong}
-                keyExtractor={(songItem, idx) => `${index}-${idx}`}
+                renderItem={({ item: song }) => (
+                  <TouchableOpacity style={styles.themeHorizontalSongCard}>
+                    <Text
+                      style={styles.themeHorizontalSongTitle}
+                      numberOfLines={2}
+                    >
+                      {getDisplayTitle(song)}
+                    </Text>
+                    <Text
+                      style={styles.themeHorizontalSongArtist}
+                      numberOfLines={1}
+                    >
+                      {getDisplayArtist(song)}
+                    </Text>
+                    {(song.tj_number || song.ky_number) && (
+                      <View style={styles.themeHorizontalKaraokeCodes}>
+                        {song.tj_number && (
+                          <Text style={styles.themeHorizontalKaraokeCodeTJ}>
+                            TJ {song.tj_number}
+                          </Text>
+                        )}
+                        {song.ky_number && (
+                          <Text style={styles.themeHorizontalKaraokeCodeKY}>
+                            KY {song.ky_number}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(song, idx) => `${index}-${idx}`}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.themeSongList}
-                snapToInterval={screenWidth * 0.7 + 12}
+                contentContainerStyle={styles.themeHorizontalSongList}
+                snapToInterval={screenWidth * 0.65 + 12}
                 decelerationRate="fast"
                 nestedScrollEnabled={true}
               />
