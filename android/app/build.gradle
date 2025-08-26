@@ -97,8 +97,8 @@ android {
         applicationId "com.song_fe"
         minSdk = rootProject.ext.minSdkVersion
         targetSdk = rootProject.ext.targetSdkVersion
-        versionCode = 13
-        versionName = "1.0.13"
+        versionCode = 14
+        versionName = "1.0.14"
 
         def apiBaseUrl = project.ext.env.getProperty('API_BASE_URL', '')
         buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrl}\""
