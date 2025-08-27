@@ -18,6 +18,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   const { showToast } = useToast();
   const { logout } = useAuth();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -34,15 +35,18 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
       }
 
       await AsyncStorage.removeItem('token');
+      setShowLogoutModal(false);
       showToast('로그아웃되었습니다.');
       logout();
     } catch (error) {
       console.error('Logout error:', error);
       try {
         await AsyncStorage.removeItem('token');
+        setShowLogoutModal(false);
         logout();
         showToast('로그아웃되었습니다.');
       } catch (storageError) {
+        setShowLogoutModal(false);
         showToast('로그아웃 중 오류가 발생했습니다.');
       }
     }
@@ -100,7 +104,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => setShowLogoutModal(true)}
+          >
             <Ionicons name="log-out-outline" size={24} color="#ff6b6b" />
             <Text style={styles.menuText}>로그아웃</Text>
           </TouchableOpacity>
@@ -118,6 +125,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
           {/* 여기에 다른 메뉴 항목들이 추가될 수 있습니다 */}
         </View>
       </View>
+
+      <DeleteConfirmModal
+        visible={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        title="로그아웃"
+        message="로그아웃하시겠습니까?"
+        confirmText="로그아웃"
+        cancelText="취소"
+        loading={false}
+      />
 
       <DeleteConfirmModal
         visible={showDeleteModal}
