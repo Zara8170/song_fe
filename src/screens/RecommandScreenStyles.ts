@@ -54,7 +54,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 
-  // 빠른 선곡 스타일
   quickPickList: {
     paddingLeft: 16,
   },

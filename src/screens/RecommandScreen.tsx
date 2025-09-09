@@ -93,7 +93,6 @@ const RecommandScreen = () => {
     try {
       if (!isActiveRef.current) return;
 
-      // 새로운 추천 요청 (백그라운드)
       const favoriteIds = favorites
         .map(song => song.songId)
         .filter(id => !Number.isNaN(id));

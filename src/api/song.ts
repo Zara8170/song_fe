@@ -135,7 +135,6 @@ export async function fetchSongsByIds(songIds: string[]): Promise<Song[]> {
   return res.json();
 }
 
-// 새로운 비동기 추천 요청 API
 export const requestRecommendation = async (
   favoriteSongIds: number[],
 ): Promise<RecommendationStatusResponse> => {
