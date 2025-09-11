@@ -157,7 +157,6 @@ export const requestRecommendation = async (
   return res.json();
 };
 
-// 캐시된 추천 결과 조회 API
 export const getCachedRecommendation =
   async (): Promise<CachedRecommendationResponse> => {
     const res = await fetchWithAuth('/api/recommendation/cached', {
@@ -173,7 +172,6 @@ export const getCachedRecommendation =
 
     const data: RecommendationResponse = await res.json();
 
-    // 새로운 API 응답을 기존 화면 구조에 맞게 변환
     const transformedData: CachedRecommendationResponse = {
       favorite_song_ids: data.favorite_song_ids,
       generated_date: data.generated_date,
@@ -182,7 +180,7 @@ export const getCachedRecommendation =
         name: group.label,
         tagline: group.tagline,
         songs: group.songs.map(song => ({
-          id: 0, // API에 id가 없으므로 임시값
+          id: 0,
           title: song.title_kr || song.title_en || song.title_jp || '',
           title_kr: song.title_kr,
           title_jp: song.title_jp,

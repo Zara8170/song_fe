@@ -14,6 +14,59 @@
 
 UtaBox는 음악을 사랑하는 사람들을 위한 종합 음악 검색 및 관리 앱입니다. 노래 검색부터 개인 보관함 관리, 맞춤형 추천까지 모든 기능을 제공합니다.
 
+## 🏗️ 전체 시스템 구성
+
+UtaBox 프로젝트는 여러 개의 저장소로 구성된 마이크로서비스 아키텍처입니다.
+
+| 저장소                                                                      | 역할              | 기술 스택                  | 설명                      |
+| --------------------------------------------------------------------------- | ----------------- | -------------------------- | ------------------------- |
+| **[📱 song_fe](https://github.com/Zara8170/song_fe)**                       | 모바일 프론트엔드 | React Native, TypeScript   | 사용자 인터페이스 앱      |
+| **[🚀 songs_be](https://github.com/Zara8170/songs_be)**                     | 백엔드 API 서버   | Spring Boot, Java          | 핵심 비즈니스 로직 및 API |
+| **[🔍 song_elasticsearch](https://github.com/Zara8170/song_elasticsearch)** | 검색 엔진         | Elasticsearch, Python      | 노래 검색 및 추천 시스템  |
+| **[🤖 song_ai](https://github.com/Zara8170/song_ai)**                       | AI 추천 서버      | Python, TensorFlow/PyTorch | 머신러닝 기반 음악 추천   |
+
+### 🔗 저장소 간 연결 구조
+
+```
+📱 song_fe (React Native)
+    ↓ API 호출
+🚀 songs_be (Spring Boot)
+    ↓ 검색 요청
+🔍 song_elasticsearch (Python)
+    ↓ AI 추천 요청
+🤖 song_ai (Python)
+```
+
+### 📋 각 저장소별 주요 기능
+
+#### 📱 [song_fe](https://github.com/Zara8170/song_fe) - 모바일 앱
+
+- 사용자 인터페이스 및 UX
+- 노래 검색 및 플레이리스트 관리
+- Google 로그인 연동
+- 다국어 지원 (한국어/영어)
+
+#### 🚀 [songs_be](https://github.com/Zara8170/songs_be) - 백엔드 API
+
+- RESTful API 제공
+- 사용자 인증 및 권한 관리
+- 데이터베이스 관리 (MySQL)
+- JWT 토큰 기반 보안
+
+#### 🔍 [song_elasticsearch](https://github.com/Zara8170/song_elasticsearch) - 검색 엔진
+
+- Elasticsearch 기반 고속 검색
+- 오타 보정 및 초성 검색
+- 다국어 검색 지원
+- 검색 성능 최적화
+
+#### 🤖 [song_ai](https://github.com/Zara8170/song_ai) - AI 추천
+
+- 머신러닝 기반 개인화 추천
+- 사용자 행동 패턴 분석
+- 협업 필터링 알고리즘
+- GPU 기반 모델 추론
+
 ### ✨ 주요 기능
 
 - 🔍 **노래 검색**: 제목, 아티스트, 가사로 원하는 노래를 쉽게 찾기
@@ -367,10 +420,17 @@ npm run monitoring:backup    # 모니터링 데이터 백업
 
 ## 📞 문의
 
-프로젝트에 대한 문의사항이나 버그 리포트는 이슈 탭에서 등록해 주세요.
+프로젝트에 대한 문의사항이나 버그 리포트는 각 저장소의 이슈 탭에서 등록해 주세요.
+
+- **전체 프로젝트 문의**: [song_fe Issues](https://github.com/Zara8170/song_fe/issues)
+- **백엔드 관련**: [songs_be Issues](https://github.com/Zara8170/songs_be/issues)
+- **검색 엔진 관련**: [song_elasticsearch Issues](https://github.com/Zara8170/song_elasticsearch/issues)
+- **AI 추천 관련**: [song_ai Issues](https://github.com/Zara8170/song_ai/issues)
 
 ---
 
 <div align="center">
   Made with ❤️ by the UtaBox Team
+  
+  ⭐ **이 프로젝트가 도움이 되셨다면 각 저장소에 Star를 눌러주세요!** ⭐
 </div>

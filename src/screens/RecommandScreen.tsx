@@ -102,7 +102,6 @@ const RecommandScreen = () => {
         await requestRecommendation(favoriteIds);
         console.log('New recommendation requested successfully');
 
-        // 새로운 추천 요청 후 캐시된 결과 로드
         await loadCachedRecommendation(true);
       } else {
         showToast('즐겨찾기에 노래를 추가한 후 추천을 받으실 수 있습니다.');
@@ -187,7 +186,6 @@ const RecommandScreen = () => {
     return shuffled.slice(0, count);
   };
 
-  // 언어에 따른 제목 표시 함수
   const getDisplayTitle = (song: CachedRecommendationSong) => {
     if (titleLanguage === 'korean') {
       return song.title_kr || song.title_en || song.title_jp || song.title;
@@ -196,7 +194,6 @@ const RecommandScreen = () => {
     }
   };
 
-  // 언어에 따른 아티스트 표시 함수
   const getDisplayArtist = (song: CachedRecommendationSong) => {
     if (titleLanguage === 'korean') {
       return song.artist_kr || song.artist;
@@ -228,7 +225,6 @@ const RecommandScreen = () => {
     );
   }
 
-  // 후보곡에서 랜덤하게 12개 선택
   const randomCandidates = getRandomItems(recommendations.candidates, 12);
 
   const contentData = [

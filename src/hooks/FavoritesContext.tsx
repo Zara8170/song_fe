@@ -71,7 +71,6 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
         console.log('Background recommendation request sent successfully');
       } catch (error) {
         console.error('Failed to request background recommendation:', error);
-        // 백그라운드 요청이므로 사용자에게 에러를 보여주지 않음
       }
     },
     [],
@@ -85,7 +84,6 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
       await saveFavorites(likedSongs);
       setFavorites(likedSongs);
 
-      // 즐겨찾기 동기화 완료 후 백그라운드에서 추천 요청
       if (likedSongs.length > 0) {
         requestBackgroundRecommendation(likedSongs);
       }
@@ -141,7 +139,6 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
         const apiStartTime = Date.now();
         Promise.all([
           toggleLike(song.songId),
-          // "좋아요 표시한 음악" 플레이리스트에도 추가
           (async () => {
             try {
               const likedSongsPlaylist = await getOrCreateLikedSongsPlaylist();
@@ -151,9 +148,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
             } catch (error: any) {
               console.error('Failed to add song to liked playlist:', error);
 
-              // 중복 추가 에러인 경우 무시 (이미 추가된 상태이므로 정상)
               if (error?.responseData) {
-                // fetchWithAuth에서 미리 읽어온 에러 데이터 사용
                 let message;
                 if (typeof error.responseData === 'string') {
                   message = error.responseData;
@@ -169,7 +164,6 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
                   message &&
                   message.includes('이미 플레이리스트에 추가된 곡입니다')
                 ) {
-                  // 중복 추가는 정상적인 상황이므로 에러 무시
                   return;
                 }
               } else if (error?.response) {
@@ -185,21 +179,17 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
                         '이미 플레이리스트에 추가된 곡입니다',
                       ))
                   ) {
-                    // 중복 추가는 정상적인 상황이므로 에러 무시
                     return;
                   }
                 } catch (parseError) {
-                  // JSON 파싱 실패 시 기존 로직 유지
                 }
               } else if (
                 error?.message &&
                 error.message.includes('이미 플레이리스트에 추가된 곡입니다')
               ) {
-                // 중복 추가는 정상적인 상황이므로 에러 무시
                 return;
               }
 
-              // 플레이리스트 추가 실패는 무시 (백엔드 동기화만 성공하면 됨)
             }
           })(),
         ])
@@ -260,7 +250,6 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
         const apiStartTime = Date.now();
         Promise.all([
           toggleLike(songId),
-          // "좋아요 표시한 음악" 플레이리스트에서도 삭제
           (async () => {
             try {
               const likedSongsPlaylist = await getOrCreateLikedSongsPlaylist();
@@ -273,7 +262,6 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
                 'Failed to remove song from liked playlist:',
                 error,
               );
-              // 플레이리스트 삭제 실패는 무시 (백엔드 동기화만 성공하면 됨)
             }
           })(),
         ])
