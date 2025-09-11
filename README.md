@@ -23,7 +23,7 @@ UtaBox 프로젝트는 여러 개의 저장소로 구성된 마이크로서비�
 | **[📱 song_fe](https://github.com/Zara8170/song_fe)**                       | 모바일 프론트엔드 | React Native, TypeScript   | 사용자 인터페이스 앱      |
 | **[🚀 songs_be](https://github.com/Zara8170/songs_be)**                     | 백엔드 API 서버   | Spring Boot, Java          | 핵심 비즈니스 로직 및 API |
 | **[🔍 song_elasticsearch](https://github.com/Zara8170/song_elasticsearch)** | 검색 엔진         | Elasticsearch, Python      | 노래 검색 및 추천 시스템  |
-| **[🤖 song_ai](https://github.com/Zara8170/song_ai)**                       | AI 추천 서버      | Python, TensorFlow/PyTorch | 머신러닝 기반 음악 추천   |
+| **[🤖 song_ai](https://github.com/Zara8170/song_ai)**                       | AI 추천 서버      | Python, OpenAI GPT, RabbitMQ | 지능형 음악 취향 분석 및 추천   |
 
 ### 🔗 저장소 간 연결 구조
 
@@ -62,16 +62,17 @@ UtaBox 프로젝트는 여러 개의 저장소로 구성된 마이크로서비�
 
 #### 🤖 [song_ai](https://github.com/Zara8170/song_ai) - AI 추천
 
-- 머신러닝 기반 개인화 추천
-- 사용자 행동 패턴 분석
-- 협업 필터링 알고리즘
-- GPU 기반 모델 추론
+- OpenAI GPT를 활용한 지능형 음악 취향 분석
+- RabbitMQ에서 추천 요청을 비동기로 수신 및 처리
+- 개인화된 추천 알고리즘 엔진
+- 추천 결과를 Redis에 캐시 저장
+- APScheduler 기반 정기적 배치 처리 (스케줄링)
 
 ### ✨ 주요 기능
 
 - 🔍 **노래 검색**: 제목, 아티스트, 가사로 원하는 노래를 쉽게 찾기
 - 📁 **보관함**: 좋아하는 노래들을 플레이리스트로 관리
-- ⭐ **노래 추천**: AI 기반 개인 맞춤형 노래 추천
+- ⭐ **노래 추천**: OpenAI GPT 기반 지능형 음악 취향 분석 및 개인화 추천
 - 🌐 **다국어 지원**: 한국어/일본어 언어 전환
 - 🔐 **사용자 인증**: Google 로그인 지원
 
@@ -102,12 +103,12 @@ UtaBox 프로젝트는 여러 개의 저장소로 구성된 마이크로서비�
 - **React Native Encrypted Storage** - 보안 저장소
 - **Firebase** - 백엔드 서비스
 
-### 모니터링 & 운영
+### AI 추천 & 메시징
 
-- **Prometheus** - 메트릭 수집 및 저장
-- **Grafana** - 데이터 시각화 및 대시보드
-- **Node Exporter** - 시스템 메트릭 수집
-- **Docker Compose** - 모니터링 스택 관리
+- **OpenAI GPT** - 지능형 음악 취향 분석
+- **RabbitMQ** - 비동기 메시지 처리
+- **APScheduler** - 정기적 배치 스케줄링
+- **FastAPI** - AI 서비스 REST API
 
 ## 📁 프로젝트 구조
 
@@ -219,6 +220,13 @@ cd android
 - 즐겨찾기 추가/제거
 - 플레이리스트에 추가
 
+### 노래 추천
+
+- OpenAI GPT 기반 지능형 취향 분석
+- 사용자 청취 패턴 학습
+- 개인화된 추천 결과 제공
+- 비동기 처리로 빠른 응답
+
 ### 보관함
 
 - 즐겨찾기 목록
@@ -240,14 +248,11 @@ npm run ios        # iOS 앱 실행
 npm run lint       # ESLint 실행
 npm test           # Jest 테스트 실행
 
-# 모니터링 스택 관리
-npm run monitoring:deploy     # 모든 VM에 Exporter 배포
-npm run monitoring:up         # 중앙 모니터링 서버 시작
-npm run monitoring:down       # 중앙 모니터링 서버 중지
-npm run monitoring:status     # 전체 모니터링 상태 확인
-npm run monitoring:check-vms  # 각 VM별 Exporter 상태 확인
-npm run monitoring:logs       # 모니터링 서버 로그 확인
-npm run monitoring:backup    # 모니터링 데이터 백업
+# AI 추천 시스템 관리
+npm run ai:start       # AI 추천 서버 시작
+npm run ai:stop        # AI 추천 서버 중지
+npm run ai:test        # AI 모델 테스트
+npm run ai:retrain     # 모델 재학습 시작
 ```
 
 ## 🌐 다국어 지원
@@ -264,114 +269,6 @@ npm run monitoring:backup    # 모니터링 데이터 백업
 - 자동 토큰 갱신
 - 보안 저장소를 통한 토큰 관리
 
-## 📊 서버 모니터링
-
-### Prometheus & Grafana 연동
-
-앱의 백엔드 서버 모니터링을 위해 Prometheus와 Grafana를 활용한 모니터링 시스템을 구축했습니다.
-
-#### 🔍 모니터링 메트릭
-
-- **시스템 메트릭**
-
-  - CPU 사용률
-  - 메모리 사용량
-  - 디스크 I/O
-  - 네트워크 트래픽
-
-- **애플리케이션 메트릭**
-
-  - API 응답 시간
-  - 요청 처리량 (RPS)
-  - 에러율
-  - 활성 사용자 수
-  - 데이터베이스 연결 상태
-
-- **비즈니스 메트릭**
-  - 노래 검색 횟수
-  - 플레이리스트 생성/수정 빈도
-  - 사용자 로그인/로그아웃 패턴
-  - 추천 시스템 활용도
-
-#### 🛠 모니터링 아키텍처
-
-```
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│  DB Server VM   │  │ Elastic Server  │  │  API Server VM  │  │  AI Server VM   │
-│                 │  │      VM         │  │                 │  │                 │
-│ Node Exporter   │  │ Node Exporter   │  │ Node Exporter   │  │ Node Exporter   │
-│ :9100           │  │ :9100           │  │ :9100           │  │ :9100           │
-│                 │  │                 │  │                 │  │                 │
-│ MySQL Exporter  │  │ ES Exporter     │  │ App Metrics     │  │ GPU Exporter    │
-│ :9104           │  │ :9114           │  │ :3000           │  │ :9400           │
-│                 │  │                 │  │                 │  │                 │
-│ PostgreSQL Exp. │  │ Filebeat        │  │ Process Exp.    │  │ Model Metrics   │
-│ :9187           │  │ :5066           │  │ :9256           │  │ :8080           │
-└─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘
-         │                    │                    │                    │
-         └────────────────────┼────────────────────┼────────────────────┘
-                              │                    │
-                    ┌─────────────────────┐       │
-                    │   모니터링 서버     │       │
-                    │                     │       │
-                    │ Prometheus :9090    │       │
-                    │ Grafana    :3000    │       │
-                    │ Alertmanager :9093  │       │
-                    │ Nginx      :80/443  │       │
-                    └─────────────────────┘       │
-                              │                    │
-                              └────────────────────┘
-```
-
-#### 📈 대시보드 구성
-
-1. **시스템 오버뷰 대시보드**
-
-   - 서버 상태 종합 현황
-   - CPU, 메모리, 디스크 사용률
-   - 네트워크 트래픽 모니터링
-
-2. **애플리케이션 성능 대시보드**
-
-   - API 엔드포인트별 응답 시간
-   - 에러율 및 성공률 추이
-   - 데이터베이스 쿼리 성능
-
-3. **사용자 활동 대시보드**
-   - 실시간 활성 사용자
-   - 기능별 사용 패턴
-   - 지역별 접속 현황
-
-#### 🚨 알림 설정
-
-- **Critical 알림**
-
-  - 서버 다운 (HTTP 500 에러율 > 5%)
-  - 메모리 사용률 > 90%
-  - 디스크 사용률 > 85%
-
-- **Warning 알림**
-  - API 응답 시간 > 2초
-  - CPU 사용률 > 80%
-  - 에러율 > 1%
-
-#### 🎯 모니터링 대상 서버
-
-| 서버 구분    | 주요 역할              | 모니터링 포인트                         |
-| ------------ | ---------------------- | --------------------------------------- |
-| **DB 서버**  | 데이터베이스 관리      | MySQL, PostgreSQL 성능 및 가용성        |
-| **Elastic**  | 검색 엔진 및 로그 관리 | Elasticsearch 클러스터 상태, 로그 수집  |
-| **API 서버** | 백엔드 API 서비스      | Node.js 애플리케이션 성능, API 응답시간 |
-| **AI 서버**  | 머신러닝 모델 처리     | GPU 사용률, 모델 추론 성능              |
-
-#### 📊 모니터링 기능
-
-- **실시간 시스템 모니터링**: CPU, 메모리, 디스크, 네트워크 사용률
-- **애플리케이션 성능 추적**: API 응답시간, 처리량, 에러율
-- **데이터베이스 성능 분석**: 쿼리 성능, 연결 상태, 저장공간
-- **AI 워크로드 모니터링**: GPU 활용률, 모델 추론 시간, 메모리 사용량
-- **로그 중앙화**: 모든 서버의 로그를 Elasticsearch로 수집 및 분석
-- **알림 시스템**: 임계값 초과 시 실시간 알림
 
 ## 📦 주요 의존성
 
@@ -386,22 +283,15 @@ npm run monitoring:backup    # 모니터링 데이터 백업
 | react-native-vector-icons                 | 10.2.0 | 아이콘               |
 | @react-native-firebase/app                | 23.0.0 | Firebase 통합        |
 
-### 모니터링 스택
+### AI 추천 시스템
 
-| 구분          | 도구                   | 버전   | 용도                | 포트 |
-| ------------- | ---------------------- | ------ | ------------------- | ---- |
-| **중앙 서버** | Prometheus             | latest | 메트릭 수집 및 저장 | 9090 |
-|               | Grafana                | latest | 데이터 시각화       | 3000 |
-|               | Alertmanager           | latest | 알림 관리           | 9093 |
-| **공통**      | Node Exporter          | latest | 시스템 메트릭 수집  | 9100 |
-| **DB 서버**   | MySQL Exporter         | latest | MySQL 메트릭        | 9104 |
-|               | PostgreSQL Exporter    | latest | PostgreSQL 메트릭   | 9187 |
-| **Elastic**   | Elasticsearch Exporter | latest | ES 메트릭           | 9114 |
-|               | Filebeat               | latest | 로그 수집           | 5066 |
-| **API 서버**  | Node.js prom-client    | latest | 애플리케이션 메트릭 | 3000 |
-|               | Process Exporter       | latest | 프로세스 모니터링   | 9256 |
-| **AI 서버**   | NVIDIA GPU Exporter    | latest | GPU 사용률 모니터링 | 9400 |
-|               | Custom Model Metrics   | latest | ML 모델 성능 메트릭 | 8080 |
+| 구분              | 기술                 | 버전   | 용도                     |
+| ----------------- | -------------------- | ------ | ------------------------ |
+| **AI 엔진**       | OpenAI GPT           | latest | 지능형 음악 취향 분석    |
+| **메시지 큐**     | RabbitMQ             | 3.13   | 비동기 추천 요청 처리    |
+| **캐시**          | Redis                | 6.0+   | 추천 결과 캐시 저장      |
+| **스케줄러**      | APScheduler          | latest | 정기적 배치 처리         |
+| **웹 프레임워크** | FastAPI              | latest | AI 서비스 API 제공       |
 
 ## 🤝 기여하기
 
