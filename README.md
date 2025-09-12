@@ -18,12 +18,12 @@ UtaBox는 음악을 사랑하는 사람들을 위한 종합 음악 검색 및 �
 
 UtaBox 프로젝트는 여러 개의 저장소로 구성된 마이크로서비스 아키텍처입니다.
 
-| 저장소                                                                      | 역할              | 기술 스택                  | 설명                      |
-| --------------------------------------------------------------------------- | ----------------- | -------------------------- | ------------------------- |
-| **[📱 song_fe](https://github.com/Zara8170/song_fe)**                       | 모바일 프론트엔드 | React Native, TypeScript   | 사용자 인터페이스 앱      |
-| **[🚀 songs_be](https://github.com/Zara8170/songs_be)**                     | 백엔드 API 서버   | Spring Boot, Java          | 핵심 비즈니스 로직 및 API |
-| **[🔍 song_elasticsearch](https://github.com/Zara8170/song_elasticsearch)** | 검색 엔진         | Elasticsearch, Python      | 노래 검색 및 추천 시스템  |
-| **[🤖 song_ai](https://github.com/Zara8170/song_ai)**                       | AI 추천 서버      | Python, OpenAI GPT, RabbitMQ | 지능형 음악 취향 분석 및 추천   |
+| 저장소                                                                      | 역할              | 기술 스택                    | 설명                          |
+| --------------------------------------------------------------------------- | ----------------- | ---------------------------- | ----------------------------- |
+| **[📱 song_fe](https://github.com/Zara8170/song_fe)**                       | 모바일 프론트엔드 | React Native, TypeScript     | 사용자 인터페이스 앱          |
+| **[🚀 songs_be](https://github.com/Zara8170/songs_be)**                     | 백엔드 API 서버   | Spring Boot, Java            | 핵심 비즈니스 로직 및 API     |
+| **[🔍 song_elasticsearch](https://github.com/Zara8170/song_elasticsearch)** | 검색 엔진         | Elasticsearch, Python        | 노래 검색 및 추천 시스템      |
+| **[🤖 song_ai](https://github.com/Zara8170/song_ai)**                       | AI 추천 서버      | Python, OpenAI GPT, RabbitMQ | 지능형 음악 취향 분석 및 추천 |
 
 ### 🔗 저장소 간 연결 구조
 
@@ -269,7 +269,6 @@ npm run ai:retrain     # 모델 재학습 시작
 - 자동 토큰 갱신
 - 보안 저장소를 통한 토큰 관리
 
-
 ## 📦 주요 의존성
 
 ### 모바일 앱
@@ -285,13 +284,13 @@ npm run ai:retrain     # 모델 재학습 시작
 
 ### AI 추천 시스템
 
-| 구분              | 기술                 | 버전   | 용도                     |
-| ----------------- | -------------------- | ------ | ------------------------ |
-| **AI 엔진**       | OpenAI GPT           | latest | 지능형 음악 취향 분석    |
-| **메시지 큐**     | RabbitMQ             | 3.13   | 비동기 추천 요청 처리    |
-| **캐시**          | Redis                | 6.0+   | 추천 결과 캐시 저장      |
-| **스케줄러**      | APScheduler          | latest | 정기적 배치 처리         |
-| **웹 프레임워크** | FastAPI              | latest | AI 서비스 API 제공       |
+| 구분              | 기술        | 버전   | 용도                  |
+| ----------------- | ----------- | ------ | --------------------- |
+| **AI 엔진**       | OpenAI GPT  | latest | 지능형 음악 취향 분석 |
+| **메시지 큐**     | RabbitMQ    | 3.13   | 비동기 추천 요청 처리 |
+| **캐시**          | Redis       | 6.0+   | 추천 결과 캐시 저장   |
+| **스케줄러**      | APScheduler | latest | 정기적 배치 처리      |
+| **웹 프레임워크** | FastAPI     | latest | AI 서비스 API 제공    |
 
 ## 🤝 기여하기
 

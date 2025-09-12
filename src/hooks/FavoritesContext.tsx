@@ -79,13 +79,23 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
   const syncWithBackend = useCallback(async () => {
     try {
       setLoading(true);
+      const currentFavoriteIds = favorites.map(song => song.songId);
       const likedSongs = await fetchMyLikes();
       console.log('Synced favorites from backend:', likedSongs);
       await saveFavorites(likedSongs);
       setFavorites(likedSongs);
 
-      if (likedSongs.length > 0) {
-        requestBackgroundRecommendation(likedSongs);
+      // 새로운 즐겨찾기가 추가된 경우에만 추천 요청
+      const newFavoriteIds = likedSongs.map(song => song.songId);
+      const hasNewFavorites = newFavoriteIds.some(
+        id => !currentFavoriteIds.includes(id),
+      );
+
+      if (likedSongs.length > 0 && hasNewFavorites) {
+        console.log('New favorites detected, requesting recommendation update');
+        requestBackgroundRecommendation(likedSongs).catch(error => {
+          console.log('Background recommendation update failed:', error);
+        });
       }
     } catch (error) {
       console.error('Failed to sync with backend:', error);
@@ -93,16 +103,28 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setLoading(false);
     }
-  }, [showToast, requestBackgroundRecommendation]);
+  }, [showToast, requestBackgroundRecommendation, favorites]);
 
   useEffect(() => {
     const initializeFavorites = async () => {
       await loadFavoritesFromStorage();
+
+      const localFavorites = await getFavorites();
+      if (localFavorites.length > 0) {
+        requestBackgroundRecommendation(localFavorites).catch(error => {
+          console.log('Early recommendation request failed:', error);
+        });
+      }
+
       await syncWithBackend();
     };
 
     initializeFavorites();
-  }, [loadFavoritesFromStorage, syncWithBackend]);
+  }, [
+    loadFavoritesFromStorage,
+    syncWithBackend,
+    requestBackgroundRecommendation,
+  ]);
 
   const addFavorite = useCallback(
     (song: Song) => {
@@ -181,15 +203,13 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
                   ) {
                     return;
                   }
-                } catch (parseError) {
-                }
+                } catch (parseError) {}
               } else if (
                 error?.message &&
                 error.message.includes('이미 플레이리스트에 추가된 곡입니다')
               ) {
                 return;
               }
-
             }
           })(),
         ])

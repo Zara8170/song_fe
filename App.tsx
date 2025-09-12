@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, AppState } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -22,6 +22,8 @@ import { LanguageProvider } from './src/contexts/LanguageContext';
 import LanguageToggleHeader from './src/components/LanguageToggleHeader';
 import { refreshAccessToken } from './src/api/auth';
 import { getAccessToken } from './src/utils/tokenStorage';
+import { requestRecommendation } from './src/api/song';
+import { getFavorites } from './src/utils/favoritesStorage';
 
 const Stack = createStackNavigator();
 
@@ -52,7 +54,31 @@ const App = () => {
     setLoggedIn(false);
   };
 
-  const checkLoginStatus = async () => {
+  const requestEarlyRecommendation = useCallback(async () => {
+    try {
+      const localFavorites = await getFavorites();
+      if (localFavorites.length > 0) {
+        const favoriteIds = localFavorites
+          .map(song => song.songId)
+          .filter(id => !Number.isNaN(id));
+
+        if (favoriteIds.length > 0) {
+          console.log(
+            '🚀 Early recommendation request started for',
+            favoriteIds.length,
+            'favorites',
+          );
+          await requestRecommendation(favoriteIds);
+          console.log('✅ Early recommendation request completed successfully');
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ Early recommendation request failed:', error);
+      // 실패해도 앱 실행에는 영향 없음
+    }
+  }, []);
+
+  const checkLoginStatus = useCallback(async () => {
     try {
       setTokenRefreshing(true);
       const token = await getAccessToken();
@@ -69,6 +95,9 @@ const App = () => {
         await refreshAccessToken(token);
         console.log('토큰 갱신 성공!');
         setLoggedIn(true);
+
+        // 로그인 성공 즉시 비동기로 추천 요청 시작 (백그라운드)
+        requestEarlyRecommendation();
       } catch (error) {
         console.log('Token refresh failed on app start:', error);
         setLoggedIn(false);
@@ -82,7 +111,7 @@ const App = () => {
       // 로딩 완료 후 스플래시 스크린 숨기기
       SplashScreen.hide();
     }
-  };
+  }, [requestEarlyRecommendation]);
 
   useEffect(() => {
     checkLoginStatus();
@@ -96,7 +125,7 @@ const App = () => {
     return () => {
       subscription.remove();
     };
-  }, []);
+  }, [checkLoginStatus]);
 
   // 네이티브 스플래시 스크린 사용으로 인해 별도 로딩 화면 불필요
 
@@ -105,7 +134,13 @@ const App = () => {
       <GestureHandlerRootView style={appStyles.flex}>
         <ToastProvider>
           {loading ? null : !loggedIn ? (
-            <LoginScreen onLoginSuccess={() => setLoggedIn(true)} />
+            <LoginScreen
+              onLoginSuccess={() => {
+                setLoggedIn(true);
+                // 로그인 성공 즉시 비동기로 추천 요청 시작
+                requestEarlyRecommendation();
+              }}
+            />
           ) : (
             <AuthProvider logout={handleLogout}>
               <LanguageProvider>
